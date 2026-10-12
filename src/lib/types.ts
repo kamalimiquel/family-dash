@@ -161,3 +161,22 @@ export interface NewsResponse {
   feeds: NewsFeed[]
   meta: CacheMeta
 }
+
+/* --- PDF (el menú que se deja en la carpeta compartida) ------------------ */
+
+export interface PdfDocument {
+  file: string
+  pages: number
+  bytes: number
+  modifiedAt: string
+  version: string
+  /** Ancho/alto de la página: la miniatura se coloca sin deformarla. */
+  aspect: number
+}
+
+export interface PdfResponse {
+  document: PdfDocument | null
+  /** Por qué no hay PDF (carpeta sin montar, sin ficheros…). */
+  reason: AgendaReason | null
+  meta: { source: string; fetchedAt: string; ttlSeconds: number }
+}

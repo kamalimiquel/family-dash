@@ -16,6 +16,9 @@ export const HOST = process.env.HOST ?? '0.0.0.0'
 export const DB_PATH =
   process.env.DASH_DB ?? path.join(PROJECT_ROOT, 'data', 'dashboard.sqlite')
 
+/** Carpeta de datos del panel (junto a la base de datos: la caché del PDF vive aquí). */
+export const DATA_DIR = path.dirname(DB_PATH)
+
 /** Cuánto vale una respuesta de Open-Meteo antes de volver a pedirla. */
 export const WEATHER_TTL_MS = Number(process.env.WEATHER_TTL_MS ?? 10 * 60 * 1000)
 
@@ -56,6 +59,29 @@ export const DEFAULT_NEWS_SOURCES: NewsSource[] = [
   { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
   { name: 'The New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
 ]
+
+/* --- PDF (el menú semanal que se deja en una carpeta compartida) ---------- */
+
+/** De dónde sale el PDF: una carpeta (el más reciente) o un fichero concreto. */
+export interface PdfSource {
+  dir?: string
+  file?: string
+}
+
+/** Cada cuánto se vuelve a mirar si el PDF ha cambiado. */
+export const PDF_TTL_MS = Number(process.env.PDF_TTL_MS ?? 10 * 60 * 1000)
+
+/** Ancho al que se rasterizan las páginas: de sobra para verlas a pantalla completa. */
+export const PDF_RENDER_WIDTH = Number(process.env.PDF_RENDER_WIDTH ?? 1500)
+
+/** Tope de páginas que se rasterizan: un menú no tiene cincuenta. */
+export const PDF_MAX_PAGES = Number(process.env.PDF_MAX_PAGES ?? 12)
+
+/**
+ * PDF de ejemplo del repositorio (`docs/ejemplo/`), inventado a propósito. El
+ * panel de casa apunta a su carpeta compartida con `PUT /api/settings`.
+ */
+export const DEFAULT_PDF_SOURCE: PdfSource = { dir: path.join(PROJECT_ROOT, 'docs', 'ejemplo') }
 
 export interface Place {
   name: string

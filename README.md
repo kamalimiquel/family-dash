@@ -4,8 +4,9 @@ Panel familiar para una **Raspberry Pi 4 con pantalla táctil**, servido en loca
 mostrado a pantalla completa en **Chromium en modo kiosco**.
 
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
-(`node:sqlite`, sin dependencias nativas) en el servidor. Cuatro bloques: **hora y
-tiempo**, **agenda**, **tareas** y una **franja de titulares** de prensa.
+(`node:sqlite`, sin dependencias nativas) en el servidor. Cinco bloques: **hora y
+tiempo**, **agenda**, **tareas**, **el menú** de la carpeta compartida y una
+**franja de titulares** de prensa.
 
 ![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
@@ -108,6 +109,28 @@ vez). Los puntitos dicen por cuál va, de los ocho que guarda de cada feed.
 - Si hay menos de cinco fuentes, la franja se adapta; y si no hay alto suficiente
   (la pantalla de 7"), se quita entera antes que enseñarla a medias.
 
+### Fase 6 — el menú en PDF, desde la carpeta compartida ✅
+
+Entre las tareas y los titulares, una tarjeta con **el PDF que se deja en una
+carpeta compartida** del NAS (el menú de la semana). Enseña la primera página en
+pequeño y, **al tocarla, se abre a pantalla completa** encima del panel.
+
+![El menú a pantalla completa, al tocar la tarjeta](docs/screenshots/visor-pdf-1080x1920.png)
+
+- **La carpeta se monta por SMB** en la Pi (paso a paso en el despliegue, más abajo)
+  y la aplicación solo lee de una ruta local.
+- Se enseña **el PDF más reciente** de la carpeta: para cambiar el menú basta con
+  dejar el fichero nuevo ahí, sin tocar nada más.
+- El backend lo **rasteriza con `pdftoppm`** (poppler, que ya viene en Raspberry Pi
+  OS) a 1500 px de ancho y guarda las páginas en `data/pdf/<versión>/`. Si el
+  fichero no ha cambiado no se vuelve a convertir, y si cambia, la versión en la
+  URL impide que el navegador enseñe la página vieja.
+- Como todo lo demás, cuando algo falla **lo dice en pantalla** en vez de quedarse
+  en blanco: carpeta sin montar, carpeta vacía, PDF ilegible o sin páginas.
+- El visor se abre **encima del panel, sin salir de la aplicación** (y los
+  titulares no son enlaces, por lo mismo): en un kiosco, irse a un visor aparte es
+  quedarse atrapado en él.
+
 ---
 
 ## Estructura
@@ -135,7 +158,8 @@ Family_dash/
 │       │   ├── settings.ts     # GET/PUT /api/settings (localidad y fuentes)
 │       │   ├── google.ts       # estado y flujo de consentimiento (solo localhost)
 │       │   ├── agenda.ts       # GET /api/calendar y /api/tasks
-│       │   └── news.ts         # GET /api/news
+│       │   ├── news.ts         # GET /api/news
+│       │   └── pdf.ts          # GET /api/pdf y /api/pdf/page/:n
 │       ├── mock.ts             # isMock(): DASH_MOCK=1, nada más
 │       ├── google/
 │       │   ├── auth.ts         # OAuth, token en SQLite y refresco automático
@@ -146,14 +170,19 @@ Family_dash/
 │       ├── weather/
 │       │   ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │       │   └── wmo.ts          # códigos WMO → texto en español + icono
-│       └── news/
+│       ├── news/
 │           ├── rss.ts          # parser mínimo de RSS 2.0 y Atom
 │           ├── sources.ts      # fuentes en la tabla settings
 │           ├── index.ts        # descarga, caché por fuente y respaldo
 │           └── mock.ts         # titulares de ejemplo (solo con DASH_MOCK=1)
+│       └── pdf/
+│           ├── source.ts       # de dónde se lee, en la tabla settings
+│           └── index.ts        # busca el más reciente, pdfinfo y pdftoppm
+├── docs/
+│   └── ejemplo/                # menú de ejemplo (inventado) para el modo simulado
 └── src/
-    ├── App.tsx                 # compone las tres tarjetas y la franja de titulares
-    ├── App.css                 # layout + tarjetas y la franja de noticias
+    ├── App.tsx                 # compone los cinco bloques
+    ├── App.css                 # layout + tarjetas, franja y visor del PDF
     ├── index.css               # reset + variables de tema
     ├── config.ts               # idioma, cadencias de refresco, créditos
     ├── components/
@@ -165,13 +194,15 @@ Family_dash/
     │   ├── TasksWidget.tsx     # tarjeta 3: tareas pendientes
     │   ├── NewsStrip.tsx       # franja de titulares (una tarjeta por fuente)
     │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
+    │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
     │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
     │   └── PhotoCredit.tsx     # crédito CC BY-SA
     ├── hooks/
     │   ├── useNow.ts           # reloj alineado al segundo
     │   ├── useWeather.ts       # pide /api/weather y se refresca sola
     │   ├── useAgenda.ts        # pide /api/calendar y /api/tasks
-    │   └── useNews.ts          # pide /api/news y se refresca sola
+    │   ├── useNews.ts          # pide /api/news y se refresca sola
+    │   └── usePdf.ts           # pide /api/pdf y se refresca sola
     └── lib/
         ├── api.ts              # cliente HTTP tipado
         ├── time.ts             # formato de fecha/hora + etiquetas de la agenda
@@ -186,11 +217,13 @@ Family_dash/
 |--------|------|----------|
 | GET | `/api/health` | Estado, versión de Node, ruta de la BD y nº de entradas en caché |
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
-| GET | `/api/settings` | Localidad y fuentes de noticias configuradas (y las de por defecto) |
-| PUT | `/api/settings` | Cambia la localidad y/o las fuentes (ver ejemplos abajo) |
+| GET | `/api/settings` | Localidad, fuentes de noticias y origen del PDF configurados (y los de por defecto) |
+| PUT | `/api/settings` | Cambia la localidad, las fuentes y/o el PDF (ver ejemplos abajo) |
 | GET | `/api/calendar` | Próximos eventos agrupables por día (`?days=7`, `?refresh=1`) |
 | GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
 | GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
+| GET | `/api/pdf` | Qué PDF hay en la carpeta compartida, con sus páginas y su versión |
+| GET | `/api/pdf/page/:n` | Una página ya rasterizada, en PNG |
 | GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |
 | POST | `/api/google/app` | Guarda `client_id` y `client_secret` — **solo desde localhost** |
 | GET | `/api/google/auth-url` | Devuelve la URL de consentimiento — **solo desde localhost** |
@@ -213,9 +246,12 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
   su caducidad. TTL: meteo **10 minutos** (`WEATHER_TTL_MS`), calendario y tareas
   **5 minutos** (`CALENDAR_TTL_MS`, `TASKS_TTL_MS`) y noticias **20 minutos**
   (`NEWS_TTL_MS`), con una entrada por fuente.
-- `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`) y
-  las fuentes de noticias (`news.sources`). Las dos cosas viven aquí y no en el
-  código: cada casa pone las suyas.
+- `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`),
+  las fuentes de noticias (`news.sources`) y de dónde sale el PDF (`pdf.source`).
+  Las tres cosas viven aquí y no en el código: cada casa pone las suyas.
+- La caché de las páginas del PDF **no** va en la base de datos: se rasterizan a
+  `data/pdf/<versión>/page-N.png` (fuera del repositorio) y solo se guarda la
+  última versión del fichero.
 - `google_app(id=1, client_id, client_secret, updated_at)` — credenciales de la
   app de Google Cloud (o mejor por entorno: `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`).
 - `google_account(id=1, email, refresh_token, access_token, access_expires_at, scope, …)`
@@ -244,6 +280,15 @@ curl -X PUT -H 'content-type: application/json' \
 El panel refresca los titulares cada 10 minutos, así que un cambio de fuentes tarda
 como mucho eso en verse; reiniciando el kiosco se ve al momento.
 
+Y de dónde sale el PDF (una carpeta —se enseña el más reciente— o un fichero
+concreto):
+
+```bash
+curl -X PUT -H 'content-type: application/json' \
+  -d '{"pdf":{"dir":"/mnt/family-dashboard"}}' \
+  http://localhost:4173/api/settings
+```
+
 ---
 
 ## Uso
@@ -266,8 +311,39 @@ En desarrollo hacen falta las dos cosas: `npm run dev:api` en una terminal y
 ## Cómo está montado en la Raspberry Pi
 
 Hardware/OS de la Pi de casa: Raspberry Pi OS sobre **Debian 13 (trixie)**, aarch64,
-sesión **Wayland con labwc** (`rpd-labwc`), autologin activado, **pantalla de 27"
-puesta en vertical** (1080×1920, HDMI-A-1, transform 90) con panel táctil ILITEK.
+sesión **Wayland con labwc** (`rpd-labwc`), autologin activado, **pantalla de 27"**
+puesta en vertical (1080×1920, HDMI-A-1, transform 90) con panel táctil ILITEK.
+
+### El menú, desde la carpeta compartida del NAS
+
+La carpeta se monta con **CIFS** y el PDF se lee de ahí. Las credenciales van en un
+fichero que solo puede leer root (`600`), nunca en el repositorio, y el montaje es
+**de solo lectura** y con `automount`: así el panel arranca aunque el NAS esté
+apagado, no puede escribir nada ahí, y el montaje se suelta solo tras un minuto sin
+usarse.
+
+```bash
+sudo tee /etc/cifs-family-dashboard >/dev/null <<'EOF'
+username=<usuario>
+password=<contraseña>
+EOF
+sudo chmod 600 /etc/cifs-family-dashboard
+sudo mkdir -p /mnt/family-dashboard
+
+# En /etc/fstab, una línea (las barras invertidas son del README: en fstab va todo seguido):
+# //<nas>/FamilyDashboard /mnt/family-dashboard cifs \
+#   credentials=/etc/cifs-family-dashboard,ro,uid=<usuario>,gid=<usuario>,\
+#   iocharset=utf8,soft,x-systemd.automount,x-systemd.idle-timeout=60,_netdev,nofail 0 0
+
+sudo systemctl daemon-reload && sudo mount -a
+ls /mnt/family-dashboard          # debe listar los ficheros del recurso
+
+curl -X PUT -H 'content-type: application/json' \
+  -d '{"pdf":{"dir":"/mnt/family-dashboard"}}' http://localhost:4173/api/settings
+```
+
+Si el NAS no está disponible, la tarjeta lo dice en pantalla (`pdf_unreachable`) y
+el resto del panel sigue funcionando igual.
 
 | Pieza | Dónde | Qué hace |
 |-------|-------|----------|

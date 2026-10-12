@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Menú semanal de ejemplo</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 14mm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'DejaVu Sans', system-ui, sans-serif;
+        color: #1e2430;
+      }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        border-bottom: 2px solid #1e2430;
+        padding-bottom: 6px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22pt;
+        letter-spacing: 0.02em;
+      }
+
+      .week {
+        font-size: 11pt;
+        color: #5b6472;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10mm;
+        font-size: 11pt;
+      }
+
+      th,
+      td {
+        border: 1px solid #c8ccd4;
+        padding: 4mm 3mm;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      thead th {
+        background: #eef1f5;
+        font-size: 9.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #5b6472;
+      }
+
+      tbody th {
+        background: #f7f8fa;
+        font-size: 12pt;
+        white-space: nowrap;
+      }
+
+      footer {
+        margin-top: 8mm;
+        font-size: 9pt;
+        color: #7a8290;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Menú de la setmana</h1>
+      <span class="week">Ejemplo · sin datos reales</span>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Comida</th>
+          <th>Cena</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Lunes</th>
+          <td>Ensalada de garbanzos y naranja</td>
+          <td>Crema de calabaza y tortilla</td>
+        </tr>
+        <tr>
+          <th>Martes</th>
+          <td>Arroz con verduras del huerto</td>
+          <td>Merluza al horno con patata</td>
+        </tr>
+        <tr>
+          <th>Miércoles</th>
+          <td>Lentejas con arroz</td>
+          <td>Tortilla de patatas y tomate</td>
+        </tr>
+        <tr>
+          <th>Jueves</th>
+          <td>Pasta con tomate y albahaca</td>
+          <td>Sopa de fideos y croquetas</td>
+        </tr>
+        <tr>
+          <th>Viernes</th>
+          <td>Escalivada y queso fresco</td>
+          <td>Pizza casera</td>
+        </tr>
+        <tr>
+          <th>Sábado</th>
+          <td>Canelones de la abuela</td>
+          <td>Tostadas y ensalada</td>
+        </tr>
+        <tr>
+          <th>Domingo</th>
+          <td>Paella de verduras</td>
+          <td>Yogur con fruta</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer>
+      Ejemplo inventado para probar el panel. El menú de casa se deja en la carpeta
+      compartida del Synology y el panel enseña el PDF más reciente.
+    </footer>
+  </body>
+</html>

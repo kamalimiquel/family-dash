@@ -24,6 +24,9 @@ export const NEWS_REFRESH_MS = 10 * 60 * 1000
 /** Cada cuánto cambia el titular que enseña cada fuente de la franja de noticias. */
 export const NEWS_ROTATE_MS = 10 * 1000
 
+/** Cada cuánto se vuelve a mirar si ha cambiado el PDF de la carpeta compartida. */
+export const PDF_REFRESH_MS = 5 * 60 * 1000
+
 /** Background photo — La Sagrada Família, Barcelona. */
 export const PHOTO = {
   src: '/sagrada-familia.jpg',
