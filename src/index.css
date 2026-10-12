@@ -1,0 +1,50 @@
+:root {
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.86);
+  --ink-faint: rgba(255, 255, 255, 0.55);
+  --accent: #f3c97e;
+  --shadow: 0 2px 28px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'DejaVu Sans', sans-serif;
+
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #0b0f18;
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Kiosk mode: no pointer, no accidental selection. */
+body.kiosk,
+body.kiosk * {
+  cursor: none !important;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}

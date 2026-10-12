@@ -1,0 +1,103 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import express, { type NextFunction, type Request, type Response } from 'express'
+import { DB_PATH, DIST_DIR, HOST, PORT } from './config.js'
+import { databaseInfo, openDatabase } from './db.js'
+import { createSettingsRouter } from './routes/settings.js'
+import { createWeatherRouter } from './routes/weather.js'
+
+const db = openDatabase(DB_PATH)
+const startedAt = Date.now()
+
+const app = express()
+app.disable('x-powered-by')
+app.use(express.json({ limit: '16kb' }))
+
+// --- API ------------------------------------------------------------------
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
+    node: process.version,
+    db: databaseInfo(db, DB_PATH),
+  })
+})
+
+app.use('/api', createWeatherRouter(db))
+app.use('/api', createSettingsRouter(db))
+
+// Cualquier otra ruta /api: 404 en JSON, no HTML.
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'not_found' })
+})
+
+// --- frontend (build de Vite) --------------------------------------------
+
+if (fs.existsSync(DIST_DIR)) {
+  app.use(
+    express.static(DIST_DIR, {
+      index: false,
+      etag: true,
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        // Los assets llevan el hash en el nombre: se pueden cachear para siempre.
+        // El HTML no: si no, el kiosco sigue enseñando la versión vieja.
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+        } else {
+          res.setHeader('Cache-Control', 'no-store')
+        }
+      },
+    }),
+  )
+
+  const indexHtml = path.join(DIST_DIR, 'index.html')
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    res.sendFile(
+      indexHtml,
+      { cacheControl: false, headers: { 'Cache-Control': 'no-store' } },
+      (error) => {
+        if (error) next(error)
+      },
+    )
+  })
+} else {
+  console.warn(`[aviso] no existe ${DIST_DIR}; ejecuta "npm run build" antes de arrancar`)
+}
+
+// --- errores --------------------------------------------------------------
+
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const message = error instanceof Error ? error.message : String(error)
+  const upstream = /open-meteo/i.test(message)
+  console.error('[error]', message)
+  res.status(upstream ? 502 : 500).json({
+    error: upstream ? 'weather_unavailable' : 'internal_error',
+    message,
+  })
+})
+
+// --- arranque y parada limpia --------------------------------------------
+
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Family Dashboard escuchando en http://${HOST}:${PORT}`)
+  console.log(`SQLite: ${DB_PATH}`)
+})
+
+function shutdown(signal: string): void {
+  console.log(`${signal} recibido: cerrando…`)
+  server.close(() => {
+    try {
+      db.close()
+    } catch {
+      /* ya cerrada */
+    }
+    process.exit(0)
+  })
+  setTimeout(() => process.exit(0), 3000).unref()
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
