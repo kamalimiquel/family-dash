@@ -70,6 +70,8 @@ en vez de cortarlos en silencio.
   `DASH_MOCK=1 npm run dev:api`. Nunca se activa solo, y las respuestas lo marcan
   con `meta.source: "mock"`.
 
+![Agenda y tareas, con datos de ejemplo](docs/screenshots/agenda-1080x1920.png)
+
 **Conectar tu cuenta** (una sola vez, ver más abajo el paso a paso).
 
 ---
