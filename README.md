@@ -220,7 +220,8 @@ Family_dash/
 │   ├── kiosk.sh                # lanza Chromium a pantalla completa
 │   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
 │   ├── google-auth.mjs         # consentimiento de Google (loopback)
-│   └── google-token-copy.mjs   # pasar la autorización de un equipo a otro
+│   ├── google-token-copy.mjs   # pasar la autorización de un equipo a otro
+│   └── measure-panel.py        # mide las tarjetas por CDP y prueba un toque real
 ├── server/
 │   ├── tsconfig.json
 │   └── src/
