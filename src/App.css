@@ -1,7 +1,8 @@
 /* ---------------------------------------------------------------------------
-   Home screen, en dos widgets:
-     · widget--clock   → hora y fecha sobre la foto de la Sagrada Família
-     · widget--weather → el tiempo de la localidad, en una tarjeta de cristal
+   Home screen, en tres widgets dentro de una rejilla:
+     · widget--now      → hora, fecha y el tiempo de la localidad, en una tarjeta
+     · widget--calendar → próximos eventos
+     · widget--tasks    → tareas pendientes
    Todo con clamp()/vmin para que funcione desde 800×480 (pantalla de 7")
    hasta 1080p, y apilado en vertical si la pantalla es alta.
 --------------------------------------------------------------------------- */
@@ -12,8 +13,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   grid-template-areas:
-    'clock calendar'
-    'weather tasks';
+    'now calendar'
+    'now tasks';
   align-items: center;
   align-content: center;
   gap: clamp(0.75rem, 2.6vmin, 2.25rem);
@@ -22,12 +23,8 @@
   isolation: isolate;
 }
 
-.widget--clock {
-  grid-area: clock;
-}
-
-.widget--weather {
-  grid-area: weather;
+.widget--now {
+  grid-area: now;
 }
 
 .widget--calendar {
@@ -41,18 +38,16 @@
 @media (orientation: portrait), (max-width: 760px) {
   .screen {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
     grid-template-areas:
-      'clock'
-      'weather'
+      'now'
       'calendar'
       'tasks';
     align-content: space-evenly;
     gap: clamp(0.75rem, 3.5vmin, 2.5rem);
   }
 
-  .widget--clock,
-  .widget--weather,
+  .widget--now,
   .widget--calendar,
   .widget--tasks {
     width: min(100%, 54rem);
@@ -114,18 +109,17 @@
     );
 }
 
-/* --- widget 1: reloj ----------------------------------------------------- */
+/* --- widget 1: hora, fecha y tiempo -------------------------------------- */
 
-.widget--clock {
+.widget--now {
   align-items: center;
-  gap: clamp(0.5rem, 1.8vmin, 1.4rem);
-  padding: clamp(0.85rem, 2.6vmin, 1.9rem) clamp(1.1rem, 3.2vmin, 2.6rem);
   text-align: center;
+  gap: clamp(0.6rem, 2vmin, 1.5rem);
 }
 
-/* Cabecera del reloj, con la misma estructura que la del tiempo:
+/* Cabecera de la tarjeta, con la misma estructura que la del tiempo:
    etiqueta a la izquierda, pastilla a la derecha. */
-.clock__head {
+.now__head {
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -133,14 +127,14 @@
   gap: 1rem;
 }
 
-.clock__label {
+.now__label {
   font-size: clamp(0.62rem, 1.6vmin, 0.9rem);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--ink-faint);
 }
 
-.clock__week {
+.now__week {
   padding: 0.35em 0.8em;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -149,6 +143,13 @@
   letter-spacing: 0.08em;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
+}
+
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.8vmin, 1.4rem);
 }
 
 .clock__time {
@@ -227,17 +228,24 @@
   text-shadow: 0 1px 18px rgba(0, 0, 0, 0.6);
 }
 
-/* --- widget 2: tiempo ---------------------------------------------------- */
+/* --- widget 2: tiempo (dentro de la tarjeta «ahora») --------------------- */
 
-.widget--weather {
-  animation-delay: 120ms;
+.weather {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.7vmin, 1.1rem);
+  text-align: left;
 }
 
+/* El tiempo abre sección dentro de la tarjeta: línea y aire arriba. */
 .weather__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding-top: clamp(0.5rem, 1.7vmin, 1.1rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .weather__place {
@@ -646,13 +654,12 @@
     padding: clamp(0.8rem, 2.4vmin, 2.4rem);
   }
 
-  .widget--clock {
+  .clock {
     gap: clamp(0.4rem, 1.4vmin, 1.1rem);
-    padding: clamp(0.8rem, 2.2vmin, 1.6rem) clamp(1.2rem, 3vmin, 2.4rem);
   }
 
-  .clock__label,
-  .clock__week {
+  .now__label,
+  .now__week {
     font-size: clamp(0.7rem, 1.8vmin, 1rem);
   }
 
@@ -668,20 +675,22 @@
     font-size: clamp(1rem, 3.2vmin, 2.2rem);
   }
 
-  .widget--clock,
-  .widget--weather,
+  .widget--now,
   .widget--calendar,
   .widget--tasks {
     width: min(100%, 54rem);
   }
 
-  .widget--weather {
-    gap: clamp(0.6rem, 1.9vmin, 1.4rem);
+  .widget--now {
+    gap: clamp(0.7rem, 2.2vmin, 1.6rem);
     padding: clamp(1rem, 2.8vmin, 2.2rem);
     border-radius: clamp(1rem, 3vmin, 2.2rem);
   }
 
-  .widget--clock,
+  .weather {
+    gap: clamp(0.6rem, 1.9vmin, 1.4rem);
+  }
+
   .widget--calendar,
   .widget--tasks {
     border-radius: clamp(1rem, 3vmin, 2.2rem);
@@ -861,6 +870,35 @@
   }
 }
 
+/* Pantallas bajas (7" en apaisado, 800×480): el reloj más contenido, sin
+   previsión de días y con menos aire, que si no la tarjeta no cabe. */
+@media (max-height: 560px) {
+  .widget--now {
+    gap: clamp(0.35rem, 1.2vmin, 0.8rem);
+    padding: clamp(0.45rem, 1.5vmin, 0.9rem);
+  }
+
+  .clock__time {
+    font-size: clamp(2rem, 14vmin, 5rem);
+  }
+
+  .clock__date {
+    font-size: clamp(0.85rem, 2.4vmin, 1.35rem);
+  }
+
+  .weather {
+    gap: clamp(0.3rem, 1.1vmin, 0.7rem);
+  }
+
+  .weather__head {
+    padding-top: clamp(0.3rem, 1vmin, 0.6rem);
+  }
+
+  .weather__daily {
+    display: none;
+  }
+}
+
 /* --- crédito de la foto (CC BY-SA) --------------------------------------- */
 
 .credit {
@@ -905,9 +943,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .widget--clock,
-  .widget--weather,
-  .widget--calendar {
+  .widget--now,
+  .widget--calendar,
+  .widget--tasks {
     animation: none;
   }
   .clock__colon,

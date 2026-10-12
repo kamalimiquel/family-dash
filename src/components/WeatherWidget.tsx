@@ -41,7 +41,7 @@ export function WeatherWidget({ state }: { state: WeatherState }) {
         : 'cargando…'
 
   return (
-    <section className="widget widget--weather" aria-label={`Tiempo en ${placeName}`}>
+    <div className="weather" aria-label={`Tiempo en ${placeName}`}>
       <header className="weather__head">
         <h2 className="weather__place">{placeName}</h2>
         <button
@@ -125,6 +125,6 @@ export function WeatherWidget({ state }: { state: WeatherState }) {
         <span className="weather__status">{status}</span>
         {data?.attribution && <span className="weather__source">{data.attribution}</span>}
       </footer>
-    </section>
+    </div>
   )
 }

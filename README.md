@@ -4,7 +4,8 @@ Panel familiar para una **Raspberry Pi 4 con pantalla táctil**, servido en loca
 mostrado a pantalla completa en **Chromium en modo kiosco**.
 
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
-(`node:sqlite`, sin dependencias nativas) en el servidor.
+(`node:sqlite`, sin dependencias nativas) en el servidor. Tres tarjetas: **hora y
+tiempo**, **agenda** y **tareas**.
 
 ![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
@@ -22,21 +23,19 @@ Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite
   (`src/hooks/useNow.ts`), para estar semanas encendido sin desviarse.
 - **Dos formatos con el mismo código**: vertical (la pantalla de 27" de la Pi,
   1080×1920) y apaisado. Con `clamp()`/`vmin` y una media query de orientación: en
-  vertical el reloj sube arriba y la tarjeta del tiempo se queda debajo, con letra
-  más grande y con amanecer/anochecer y 6 días de previsión que en apaisado no caben.
+  vertical las tarjetas se apilan con letra más grande, y es donde caben el
+  amanecer/anochecer y 6 días de previsión que en apaisado no entran.
 - Modo kiosco (`?kiosk=1`): oculta el cursor y desactiva la selección de texto.
 
-### Fase 2 — backend y dos widgets ✅
+### Fase 2 — backend y el tiempo ✅
 
-La pantalla está partida en **dos widgets**: el reloj a la izquierda y, a la
-derecha, una tarjeta con **el tiempo de tu ciudad** (en los ejemplos, Barcelona;
-la localidad real se configura con `PUT /api/settings`).
+Una tarjeta con **el tiempo de tu ciudad** (en los ejemplos, Barcelona; la localidad
+real se configura con `PUT /api/settings`).
 
-- **Los dos son tarjetas de cristal del mismo ancho**: mismo fondo translúcido,
-  mismo borde y mismo redondeo, para que el panel se lea como una sola cosa. En
-  vertical van apiladas (reloj arriba, tiempo debajo); en apaisado, lado a lado.
-  La tarjeta del reloj lleva su propia cabecera (etiqueta `Hoy` y la pastilla con
-  el número de semana ISO, que luego usará el menú semanal).
+- **Todas las tarjetas son de cristal y del mismo ancho**: mismo fondo translúcido,
+  mismo borde y mismo redondeo, para que el panel se lea como una sola cosa. La
+  cabecera de la primera lleva la etiqueta `Hoy` y la pastilla con el número de
+  semana ISO (que luego usará el menú semanal).
 - **Servidor Express** (`server/`) que sirve la API *y* el build del cliente en un
   solo proceso (puerto 4173).
 - **SQLite** para cachear la meteo y guardar ajustes (qué localidad, etc.).
@@ -48,7 +47,7 @@ la localidad real se configura con `PUT /api/settings`).
 - Si Open-Meteo no responde, el backend **sirve la última lectura cacheada** y el
   widget lo indica; si el backend entero cae, el reloj sigue funcionando igual.
 
-![Detalle a 800×480, en apaisado](docs/screenshots/home-800x480.png)
+![En la pantalla de 7" (800×480), con el reloj y el tiempo apretados](docs/screenshots/home-800x480.png)
 
 ### Fase 3 — Google Calendar y tareas ✅
 
@@ -74,9 +73,21 @@ cada tarjeta lleva su propio recuento (`6 eventos`, `31 pendientes · 4 listas`)
   aparte** (`DASH_DB`): si no, los datos de ejemplo se quedan en la caché del panel
   de verdad y los sigues viendo cuando apagues el mock.
 
-![Agenda y tareas, con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
-
 **Conectar tu cuenta** (una sola vez, ver más abajo el paso a paso).
+
+### Fase 4 — la hora y el tiempo, en una sola tarjeta ✅
+
+Dejaron de ser dos tarjetas: ahora comparten una —cabecera (`Hoy` + semana ISO), la
+hora en grande, la fecha y, debajo de una línea, el tiempo de la localidad con su
+previsión— para que el panel se lea de un vistazo y quede sitio para la agenda y las
+tareas. Los dos siguen siendo componentes sueltos (`ClockWidget`, `WeatherWidget`)
+que **no pintan tarjeta**: el cristal lo pone `NowWidget`, así que se pueden
+recomponer sin tocar sus estilos.
+
+Con tres tarjetas el panel se reparte distinto: en vertical se apilan (hora y
+tiempo, agenda, tareas) y en apaisado la primera ocupa la columna izquierda entera
+mientras agenda y tareas se apilan a la derecha. En la pantalla de 7" (800×480) el
+reloj se encoge y se cae la previsión de días, o no cabe.
 
 ---
 
@@ -115,16 +126,17 @@ Family_dash/
 │           ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │           └── wmo.ts          # códigos WMO → texto en español + icono
 └── src/
-    ├── App.tsx                 # compone los cuatro widgets
-    ├── App.css                 # layout + tarjetas del tiempo, la agenda y las tareas
+    ├── App.tsx                 # compone las tres tarjetas
+    ├── App.css                 # layout + tarjetas de la hora/tiempo, la agenda y las tareas
     ├── index.css               # reset + variables de tema
     ├── config.ts               # idioma, cadencias de refresco, créditos
     ├── components/
     │   ├── Background.tsx      # foto + degradados para legibilidad
-    │   ├── ClockWidget.tsx     # widget 1: hora y fecha
-    │   ├── WeatherWidget.tsx   # widget 2: el tiempo
-    │   ├── CalendarWidget.tsx  # widget 3: próximos eventos del calendario
-    │   ├── TasksWidget.tsx     # widget 4: tareas pendientes
+    │   ├── NowWidget.tsx       # tarjeta 1: la hora, la fecha y el tiempo juntos
+    │   ├── ClockWidget.tsx     #   · el reloj (bloque, sin tarjeta propia)
+    │   ├── WeatherWidget.tsx   #   · el tiempo de la localidad (bloque)
+    │   ├── CalendarWidget.tsx  # tarjeta 2: próximos eventos del calendario
+    │   ├── TasksWidget.tsx     # tarjeta 3: tareas pendientes
     │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
     │   └── PhotoCredit.tsx     # crédito CC BY-SA
     ├── hooks/

@@ -1,9 +1,8 @@
 import { Background } from './components/Background'
 import { CalendarWidget } from './components/CalendarWidget'
-import { ClockWidget } from './components/ClockWidget'
+import { NowWidget } from './components/NowWidget'
 import { PhotoCredit } from './components/PhotoCredit'
 import { TasksWidget } from './components/TasksWidget'
-import { WeatherWidget } from './components/WeatherWidget'
 import { useAgenda } from './hooks/useAgenda'
 import { useNow } from './hooks/useNow'
 import { useWeather } from './hooks/useWeather'
@@ -17,8 +16,7 @@ export default function App() {
   return (
     <main className="screen">
       <Background />
-      <ClockWidget now={now} />
-      <WeatherWidget state={weather} />
+      <NowWidget now={now} weather={weather} />
       <CalendarWidget state={agenda} />
       <TasksWidget state={agenda} />
       <PhotoCredit />
