@@ -6,7 +6,7 @@ mostrado a pantalla completa en **Chromium en modo kiosco**.
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
 (`node:sqlite`, sin dependencias nativas) en el servidor.
 
-![Panel en la Raspberry Pi, en vertical](docs/screenshots/pi-vertical.png)
+![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
 ---
 
@@ -50,12 +50,14 @@ la localidad real se configura con `PUT /api/settings`).
 
 ![Detalle a 800×480, en apaisado](docs/screenshots/home-800x480.png)
 
-### Fase 3 — agenda: Google Calendar y tareas ✅
+### Fase 3 — Google Calendar y tareas ✅
 
-Tercer widget, debajo del tiempo: **próximos eventos agrupados por día** (`Hoy`,
-`Mañana`, `jue 16`…) y **tareas pendientes** con su vencimiento (`hoy`, `mañana`,
-`vencida`). Si hay más de los que caben en la pantalla, lo dice (`y 2 eventos más`)
-en vez de cortarlos en silencio.
+Dos tarjetas más, **una para el calendario y otra para las tareas**: la **Agenda**
+con los próximos eventos agrupados por día (`Hoy`, `Mañana`, `jue 16`…) y la de
+**Tareas** con las pendientes y su vencimiento (`hoy`, `mañana`, y `vencida` en
+rojo cuando la fecha ya pasó). Si hay más de los que caben en la pantalla lo dicen
+(`y 2 eventos más`, `y 28 tareas más`) en vez de cortarlos en silencio, y el pie de
+cada tarjeta lleva su propio recuento (`6 eventos`, `31 pendientes · 4 listas`).
 
 - **OAuth 2.0 a mano** (`server/src/google/auth.ts`), sin la librería `googleapis`:
   son cuatro llamadas HTTP. Modelo de *app instalada*, con redirect a loopback.
@@ -63,8 +65,8 @@ en vez de cortarlos en silencio.
   funciona meses sin que nadie vuelva a iniciar sesión: el backend refresca el
   access_token solo, cuando caduca.
 - Permisos mínimos: `calendar.readonly`, `tasks.readonly` y `userinfo.email`.
-- Si falta configurar o autorizar, el widget **lo dice en pantalla** en vez de
-  quedarse en blanco (`reason` en la respuesta), y el reloj y el tiempo siguen
+- Si falta configurar o autorizar, **las dos tarjetas lo dicen en pantalla** en vez
+  de quedarse en blanco (`reason` en la respuesta), y el reloj y el tiempo siguen
   funcionando.
 - Para trabajar en la interfaz sin credenciales hay datos simulados:
   `DASH_MOCK=1 DASH_DB=/tmp/ejemplo.sqlite npm run dev:api`. Nunca se activa solo,
@@ -72,7 +74,7 @@ en vez de cortarlos en silencio.
   aparte** (`DASH_DB`): si no, los datos de ejemplo se quedan en la caché del panel
   de verdad y los sigues viendo cuando apagues el mock.
 
-![Agenda y tareas, con datos de ejemplo](docs/screenshots/agenda-1080x1920.png)
+![Agenda y tareas, con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
 **Conectar tu cuenta** (una sola vez, ver más abajo el paso a paso).
 
@@ -113,15 +115,16 @@ Family_dash/
 │           ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │           └── wmo.ts          # códigos WMO → texto en español + icono
 └── src/
-    ├── App.tsx                 # compone los tres widgets
-    ├── App.css                 # layout + tarjetas del tiempo y la agenda
+    ├── App.tsx                 # compone los cuatro widgets
+    ├── App.css                 # layout + tarjetas del tiempo, la agenda y las tareas
     ├── index.css               # reset + variables de tema
     ├── config.ts               # idioma, cadencias de refresco, créditos
     ├── components/
     │   ├── Background.tsx      # foto + degradados para legibilidad
     │   ├── ClockWidget.tsx     # widget 1: hora y fecha
     │   ├── WeatherWidget.tsx   # widget 2: el tiempo
-    │   ├── AgendaWidget.tsx    # widget 3: eventos y tareas
+    │   ├── CalendarWidget.tsx  # widget 3: próximos eventos del calendario
+    │   ├── TasksWidget.tsx     # widget 4: tareas pendientes
     │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
     │   └── PhotoCredit.tsx     # crédito CC BY-SA
     ├── hooks/

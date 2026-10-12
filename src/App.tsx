@@ -1,7 +1,8 @@
-import { AgendaWidget } from './components/AgendaWidget'
 import { Background } from './components/Background'
+import { CalendarWidget } from './components/CalendarWidget'
 import { ClockWidget } from './components/ClockWidget'
 import { PhotoCredit } from './components/PhotoCredit'
+import { TasksWidget } from './components/TasksWidget'
 import { WeatherWidget } from './components/WeatherWidget'
 import { useAgenda } from './hooks/useAgenda'
 import { useNow } from './hooks/useNow'
@@ -18,7 +19,8 @@ export default function App() {
       <Background />
       <ClockWidget now={now} />
       <WeatherWidget state={weather} />
-      <AgendaWidget state={agenda} />
+      <CalendarWidget state={agenda} />
+      <TasksWidget state={agenda} />
       <PhotoCredit />
     </main>
   )

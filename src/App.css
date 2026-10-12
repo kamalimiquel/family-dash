@@ -12,8 +12,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   grid-template-areas:
-    'clock weather'
-    'clock agenda';
+    'clock calendar'
+    'weather tasks';
   align-items: center;
   align-content: center;
   gap: clamp(0.75rem, 2.6vmin, 2.25rem);
@@ -30,25 +30,31 @@
   grid-area: weather;
 }
 
-.widget--agenda {
-  grid-area: agenda;
+.widget--calendar {
+  grid-area: calendar;
+}
+
+.widget--tasks {
+  grid-area: tasks;
 }
 
 @media (orientation: portrait), (max-width: 760px) {
   .screen {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     grid-template-areas:
       'clock'
       'weather'
-      'agenda';
+      'calendar'
+      'tasks';
     align-content: space-evenly;
     gap: clamp(0.75rem, 3.5vmin, 2.5rem);
   }
 
   .widget--clock,
   .widget--weather,
-  .widget--agenda {
+  .widget--calendar,
+  .widget--tasks {
     width: min(100%, 54rem);
     justify-self: center;
   }
@@ -242,7 +248,7 @@
 }
 
 .weather__refresh,
-.agenda__refresh {
+.calendar__refresh {
   flex: none;
   width: clamp(1.9rem, 5vmin, 2.5rem);
   height: clamp(1.9rem, 5vmin, 2.5rem);
@@ -257,7 +263,7 @@
 }
 
 .weather__refresh:active,
-.agenda__refresh:active {
+.calendar__refresh:active {
   transform: scale(0.93);
   background: rgba(255, 255, 255, 0.14);
 }
@@ -406,172 +412,14 @@
   color: #ffd08a;
 }
 
-/* --- widget 3: agenda ---------------------------------------------------- */
-
-.agenda__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.agenda__title {
-  margin: 0;
-  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.agenda__actions {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.4rem, 1.2vmin, 0.8rem);
-}
-
-.agenda__account {
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-
-.agenda__hint {
-  margin: 0;
-  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
-  color: #ffd08a;
-}
-
-.agenda__empty {
-  margin: 0;
-  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
-  color: var(--ink-faint);
-}
-
-.agenda__days {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.3rem, 1.1vmin, 0.7rem);
-}
-
-.agenda__day-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.agenda__day {
-  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-}
-
-.agenda__events {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.agenda__event {
-  display: flex;
-  align-items: baseline;
-  gap: clamp(0.5rem, 1.6vmin, 1rem);
-  padding: clamp(0.16rem, 0.5vmin, 0.3rem) 0;
-}
-
-.agenda__event + .agenda__event {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.agenda__time {
-  flex: none;
-  width: clamp(3.2rem, 9vmin, 5rem);
-  font-size: clamp(0.72rem, 1.9vmin, 1.05rem);
-  color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
-}
-
-.agenda__what {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  font-size: clamp(0.8rem, 2.1vmin, 1.2rem);
-}
-
-.agenda__where {
-  font-size: clamp(0.58rem, 1.4vmin, 0.8rem);
-  color: var(--ink-faint);
-}
-
-.agenda__tasks {
-  margin-top: clamp(0.25rem, 0.9vmin, 0.6rem);
-  padding-top: clamp(0.3rem, 1vmin, 0.7rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.agenda__subtitle {
-  margin: 0 0 0.25em;
-  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-}
-
-.agenda__task-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
-}
-
-.agenda__task {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.4rem, 1.2vmin, 0.7rem);
-  font-size: clamp(0.76rem, 2vmin, 1.1rem);
-}
-
-.agenda__bullet {
-  flex: none;
-  width: 0.42em;
-  height: 0.42em;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.85;
-}
-
-.agenda__task-title {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.agenda__due {
-  margin-left: auto;
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-}
-
-.agenda__due[data-late='true'] {
-  color: #ff9f7a;
-}
-
-.agenda__more {
+.tasks__more {
   margin: 0.15em 0 0;
   font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
   letter-spacing: 0.03em;
   color: var(--ink-faint);
 }
 
-.agenda__foot {
+.tasks__foot {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -581,7 +429,207 @@
   color: var(--ink-faint);
 }
 
-.agenda__foot--warn .agenda__status {
+.tasks__foot--warn .tasks__status {
+  color: #ffd08a;
+}
+
+/* --- widget 3: agenda ---------------------------------------------------- */
+
+.calendar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.calendar__title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.calendar__actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 1.2vmin, 0.8rem);
+}
+
+.calendar__account {
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.calendar__hint {
+  margin: 0;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
+  color: #ffd08a;
+}
+
+.calendar__empty {
+  margin: 0;
+  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
+  color: var(--ink-faint);
+}
+
+.calendar__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.3rem, 1.1vmin, 0.7rem);
+}
+
+.calendar__day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.calendar__day {
+  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.calendar__events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar__event {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.6vmin, 1rem);
+  padding: clamp(0.16rem, 0.5vmin, 0.3rem) 0;
+}
+
+.calendar__event + .calendar__event {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.calendar__time {
+  flex: none;
+  width: clamp(3.2rem, 9vmin, 5rem);
+  font-size: clamp(0.72rem, 1.9vmin, 1.05rem);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar__what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: clamp(0.8rem, 2.1vmin, 1.2rem);
+}
+
+.calendar__where {
+  font-size: clamp(0.58rem, 1.4vmin, 0.8rem);
+  color: var(--ink-faint);
+}
+
+/* --- widget 4: tareas pendientes ----------------------------------------- */
+
+.tasks__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tasks__heading {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tasks__count {
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.tasks__hint {
+  margin: 0;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
+  color: #ffd08a;
+}
+
+.tasks__empty {
+  margin: 0;
+  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
+  color: var(--ink-faint);
+}
+
+.tasks__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.tasks__item {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 1.2vmin, 0.7rem);
+  font-size: clamp(0.76rem, 2vmin, 1.1rem);
+}
+
+.tasks__bullet {
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.tasks__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tasks__due {
+  margin-left: auto;
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.tasks__due[data-late='true'] {
+  color: #ff9f7a;
+}
+
+.calendar__more {
+  margin: 0.15em 0 0;
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.calendar__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: clamp(0.53rem, 1.3vmin, 0.75rem);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.calendar__foot--warn .calendar__status {
   color: #ffd08a;
 }
 
@@ -594,13 +642,13 @@
 @media (orientation: portrait) {
   .screen {
     align-content: space-evenly;
-    gap: clamp(0.6rem, 2.2vmin, 1.8rem);
-    padding: clamp(1rem, 3vmin, 3rem);
+    gap: clamp(0.45rem, 1.6vmin, 1.2rem);
+    padding: clamp(0.8rem, 2.4vmin, 2.4rem);
   }
 
   .widget--clock {
-    gap: clamp(0.5rem, 1.8vmin, 1.4rem);
-    padding: clamp(0.9rem, 2.6vmin, 1.8rem) clamp(1.2rem, 3.4vmin, 2.6rem);
+    gap: clamp(0.4rem, 1.4vmin, 1.1rem);
+    padding: clamp(0.8rem, 2.2vmin, 1.6rem) clamp(1.2rem, 3vmin, 2.4rem);
   }
 
   .clock__label,
@@ -609,80 +657,87 @@
   }
 
   .clock__time {
-    font-size: clamp(3rem, 19vmin, 12rem);
+    font-size: clamp(3rem, 15.5vmin, 10rem);
   }
 
   .clock__rule {
-    width: clamp(3.5rem, 13vmin, 10rem);
+    width: clamp(3.5rem, 11vmin, 9rem);
   }
 
   .clock__date {
-    font-size: clamp(1.05rem, 3.8vmin, 2.5rem);
+    font-size: clamp(1rem, 3.2vmin, 2.2rem);
   }
 
   .widget--clock,
   .widget--weather,
-  .widget--agenda {
+  .widget--calendar,
+  .widget--tasks {
     width: min(100%, 54rem);
   }
 
   .widget--weather {
-    gap: clamp(0.8rem, 2.6vmin, 1.8rem);
-    padding: clamp(1.2rem, 3.6vmin, 2.7rem);
+    gap: clamp(0.6rem, 1.9vmin, 1.4rem);
+    padding: clamp(1rem, 2.8vmin, 2.2rem);
     border-radius: clamp(1rem, 3vmin, 2.2rem);
   }
 
   .widget--clock,
-  .widget--agenda {
+  .widget--calendar,
+  .widget--tasks {
     border-radius: clamp(1rem, 3vmin, 2.2rem);
   }
 
-  .widget--agenda {
-    gap: clamp(0.7rem, 2.2vmin, 1.6rem);
-    padding: clamp(1.2rem, 3.6vmin, 2.7rem);
+  .widget--calendar,
+  .widget--tasks {
+    gap: clamp(0.55rem, 1.7vmin, 1.3rem);
+    padding: clamp(1rem, 2.7vmin, 2.2rem);
   }
 
-  .agenda__title {
+  .calendar__title,
+  .tasks__heading {
     font-size: clamp(1.3rem, 3.7vmin, 2.3rem);
   }
 
-  .agenda__account,
-  .agenda__due {
+  .calendar__account,
+  .tasks__count,
+  .tasks__due {
     font-size: clamp(0.62rem, 1.6vmin, 0.9rem);
   }
 
-  .agenda__hint,
-  .agenda__empty {
+  .calendar__hint,
+  .calendar__empty,
+  .tasks__hint,
+  .tasks__empty {
     font-size: clamp(0.9rem, 2.4vmin, 1.4rem);
   }
 
-  .agenda__day,
-  .agenda__subtitle {
+  .calendar__day {
     font-size: clamp(0.68rem, 1.8vmin, 1rem);
   }
 
-  .agenda__time {
+  .calendar__time {
     width: clamp(3.5rem, 9.5vmin, 5.5rem);
     font-size: clamp(0.85rem, 2.2vmin, 1.25rem);
   }
 
-  .agenda__what {
+  .calendar__what {
     font-size: clamp(0.95rem, 2.5vmin, 1.5rem);
   }
 
-  .agenda__where {
+  .calendar__where {
     font-size: clamp(0.65rem, 1.7vmin, 0.95rem);
   }
 
-  .agenda__task {
+  .tasks__item {
     font-size: clamp(0.9rem, 2.3vmin, 1.35rem);
   }
 
-  .agenda__event {
+  .calendar__event {
     padding: clamp(0.25rem, 0.7vmin, 0.45rem) 0;
   }
 
-  .agenda__foot {
+  .calendar__foot,
+  .tasks__foot {
     font-size: clamp(0.6rem, 1.5vmin, 0.85rem);
   }
 
@@ -691,17 +746,17 @@
   }
 
   .weather__refresh,
-  .agenda__refresh {
+  .calendar__refresh {
     width: clamp(2.5rem, 6.4vmin, 3.4rem);
     height: clamp(2.5rem, 6.4vmin, 3.4rem);
   }
 
   .weather__icon {
-    width: clamp(3.4rem, 11vmin, 6rem);
+    width: clamp(3rem, 9.5vmin, 5.2rem);
   }
 
   .weather__value {
-    font-size: clamp(3.2rem, 12vmin, 7rem);
+    font-size: clamp(3rem, 10.5vmin, 6.2rem);
   }
 
   .weather__extreme {
@@ -714,7 +769,7 @@
 
   .weather__details {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(0.5rem, 2vmin, 1.3rem);
+    gap: clamp(0.4rem, 1.5vmin, 1rem);
   }
 
   .weather__detail--extra {
@@ -731,7 +786,7 @@
 
   .weather__day {
     border-radius: 0.8rem;
-    padding: clamp(0.4rem, 1.2vmin, 0.75rem) 0;
+    padding: clamp(0.28rem, 0.75vmin, 0.5rem) 0;
   }
 
   .weather__day svg {
@@ -774,13 +829,18 @@
     display: none;
   }
 
-  /* La agenda se queda en los dos primeros eventos y sin tareas. */
-  .agenda__days {
+  .calendar__days {
     gap: 0;
   }
 
-  .agenda__event:nth-child(n + 3),
-  .agenda__tasks {
+  /* Pantallas bajas: cada tarjeta se queda en dos líneas y sin pie. */
+  .calendar__event:nth-child(n + 3),
+  .tasks__item:nth-child(n + 3) {
+    display: none;
+  }
+
+  .calendar__foot,
+  .tasks__foot {
     display: none;
   }
 }
@@ -790,7 +850,13 @@
     display: none;
   }
 
-  .widget--agenda {
+  .calendar__event:nth-child(n + 2),
+  .tasks__item:nth-child(n + 2) {
+    display: none;
+  }
+
+  .calendar__more,
+  .tasks__more {
     display: none;
   }
 }
@@ -841,12 +907,12 @@
 @media (prefers-reduced-motion: reduce) {
   .widget--clock,
   .widget--weather,
-  .widget--agenda {
+  .widget--calendar {
     animation: none;
   }
   .clock__colon,
   .weather__refresh,
-  .agenda__refresh {
+  .calendar__refresh {
     transition: none;
   }
 }
