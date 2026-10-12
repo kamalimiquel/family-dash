@@ -1,28 +1,45 @@
 /* ---------------------------------------------------------------------------
-   Home screen, en tres widgets dentro de una rejilla:
-     · widget--now      → hora, fecha y el tiempo de la localidad, en una tarjeta
-     · widget--calendar → próximos eventos
-     · widget--tasks    → tareas pendientes
-   Todo con clamp()/vmin para que funcione desde 800×480 (pantalla de 7")
-   hasta 1080p, y apilado en vertical si la pantalla es alta.
+   Home screen. El reparto está pedido en centímetros: la pantalla de la Pi es
+   de 27" con 1080×1920 → 81,6 px/pulgada → 32,12 px por centímetro.
+
+     · arriba izquierda → la hora y el tiempo, 12×12 cm
+     · arriba derecha   → las tareas, 12×12 cm
+     · debajo           → el calendario, a todo el ancho
+     · debajo           → el menú (el PDF), 10 cm de alto
+     · lo que queda     → los titulares de prensa
 --------------------------------------------------------------------------- */
+
+:root {
+  --cm: 32.12px;
+  --cm12: calc(12 * var(--cm));
+  --cm10: calc(10 * var(--cm));
+}
 
 .screen {
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: var(--cm12) minmax(0, 1fr) var(--cm12);
+  grid-template-rows: var(--cm12) auto var(--cm10) minmax(0, 1fr);
   grid-template-areas:
-    'now calendar'
-    'now tasks'
-    'now menu'
-    'news news';
-  align-items: center;
-  align-content: center;
-  gap: clamp(0.75rem, 2.6vmin, 2.25rem);
-  padding: clamp(0.75rem, 3vmin, 2.75rem);
+    'now . tasks'
+    'calendar calendar calendar'
+    'menu menu menu'
+    'news news news';
+  align-content: start;
+  gap: clamp(0.5rem, 1.4vmin, 1rem);
+  padding: clamp(0.5rem, 1.4vmin, 1rem);
   overflow: hidden;
   isolation: isolate;
+}
+
+/* En apaisado no cabe a tamaño real (12 + 10 cm se comen los 1080 de alto): la
+   unidad se encoge. Los tamaños de tarjeta se sueltan más abajo, al final del
+   fichero, porque si no ganan las reglas de vertical por orden de aparición. */
+@media (orientation: landscape) {
+  :root {
+    --cm: 15px;
+  }
 }
 
 .widget--now {
@@ -37,23 +54,11 @@
   grid-area: tasks;
 }
 
-@media (orientation: portrait), (max-width: 760px) {
-  .screen {
-    /* Dos columnas solo para la fila de tareas + menú: el PDF cabe ahí sin
-       recortar nada de la agenda ni de las noticias. */
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas:
-      'now now'
-      'calendar calendar'
-      'tasks menu'
-      'news news';
-    align-content: space-evenly;
-    gap: clamp(0.75rem, 3.5vmin, 2.5rem);
-  }
+.widget--pdf {
+  grid-area: menu;
 }
 
-/* Tarjeta de cristal: la comparten los dos widgets. */
+/* Tarjeta de cristal: la comparten todas. */
 .widget {
   position: relative;
   min-width: 0;
@@ -63,14 +68,14 @@
   padding: clamp(0.85rem, 2.6vmin, 1.9rem);
   border-radius: clamp(0.9rem, 2.4vmin, 1.6rem);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(155deg, rgba(14, 20, 34, 0.62), rgba(10, 14, 24, 0.4));
+  background: linear-gradient(155deg, rgba(16, 18, 38, 0.6), rgba(10, 12, 28, 0.38));
   backdrop-filter: blur(16px) saturate(1.25);
   -webkit-backdrop-filter: blur(16px) saturate(1.25);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   animation: widget-in 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* --- fondo --------------------------------------------------------------- */
+/* --- fondo: degradado violeta/azul, manchas en movimiento y olas ---------- */
 
 .backdrop {
   position: absolute;
@@ -79,32 +84,121 @@
   overflow: hidden;
 }
 
-.backdrop__photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 58%;
-  transform: scale(1.04);
-  filter: saturate(1.06) contrast(1.03);
-}
-
-/* Mantiene legible el texto sobre árboles, piedra y cielo. */
-.backdrop__scrim {
+.backdrop__base {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(
-      125% 95% at 50% 44%,
-      rgba(6, 10, 20, 0) 32%,
-      rgba(6, 10, 20, 0.42) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(6, 10, 20, 0.62) 0%,
-      rgba(6, 10, 20, 0.18) 30%,
-      rgba(6, 10, 20, 0.26) 62%,
-      rgba(6, 10, 20, 0.82) 100%
-    );
+    radial-gradient(120% 90% at 18% 0%, #2a1573 0%, rgba(42, 21, 115, 0) 62%),
+    radial-gradient(100% 80% at 92% 12%, #10306e 0%, rgba(16, 48, 110, 0) 58%),
+    linear-gradient(165deg, #090a22 0%, #130c36 45%, #07122c 100%);
+}
+
+/* Manchas grandes que se mueven muy despacio: solo transform, que es lo que la
+   GPU mueve bien (nada de filtros animados, que en la Pi se notan). */
+.backdrop__glow {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.backdrop__glow--a {
+  width: 95vmin;
+  height: 95vmin;
+  top: -28vmin;
+  left: -22vmin;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.5) 0%, rgba(124, 58, 237, 0) 68%);
+  animation: glow-a 26s ease-in-out infinite;
+}
+
+.backdrop__glow--b {
+  width: 78vmin;
+  height: 78vmin;
+  top: 16vmin;
+  right: -28vmin;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.46) 0%, rgba(37, 99, 235, 0) 70%);
+  animation: glow-b 34s ease-in-out infinite;
+}
+
+.backdrop__glow--c {
+  width: 68vmin;
+  height: 68vmin;
+  bottom: 4vmin;
+  left: 6vmin;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%);
+  animation: glow-c 30s ease-in-out infinite;
+}
+
+/* Las olas, abajo a la derecha. El dibujo mide el doble que su caja: al
+   desplazarlo la mitad, el bucle no tiene costura. */
+.backdrop__waves {
+  position: absolute;
+  right: -5%;
+  bottom: -3%;
+  width: 72%;
+  height: 32%;
+}
+
+.backdrop__wave {
+  stroke-width: 1.6;
+  animation: ola 30s linear infinite;
+}
+
+.backdrop__wave--1 {
+  fill: rgba(139, 92, 246, 0.24);
+  stroke: rgba(196, 181, 253, 0.5);
+  animation-duration: 26s;
+}
+
+.backdrop__wave--2 {
+  fill: rgba(59, 130, 246, 0.2);
+  stroke: rgba(147, 197, 253, 0.42);
+  animation-duration: 38s;
+  animation-direction: reverse;
+}
+
+.backdrop__wave--3 {
+  fill: rgba(34, 211, 238, 0.15);
+  stroke: rgba(165, 243, 252, 0.35);
+  animation-duration: 48s;
+}
+
+@keyframes glow-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, 5%, 0) scale(1.12);
+  }
+}
+
+@keyframes glow-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-7%, 6%, 0) scale(0.94);
+  }
+}
+
+@keyframes glow-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8%, -6%, 0) scale(1.08);
+  }
+}
+
+@keyframes ola {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-1200px);
+  }
 }
 
 /* --- widget 1: hora, fecha y tiempo -------------------------------------- */
@@ -907,289 +1001,171 @@
   }
 }
 
-/* --- crédito de la foto (CC BY-SA) --------------------------------------- */
-
-/* Va antes de las media queries de orientación a propósito: así la de vertical
-   puede moverlo arriba (si estuviera después, ganaría el `bottom` de aquí y el
-   elemento se estiraría de arriba abajo, comiéndose los toques del panel). */
-.credit {
-  position: absolute;
-  left: max(1.2vmin, 0.6rem);
-  bottom: max(1.2vmin, 0.6rem);
-  margin: 0;
-  max-width: min(60vw, 40rem);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1em;
-  font-size: clamp(0.5rem, 1.15vmin, 0.78rem);
-  line-height: 1.35;
-  letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.4);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
-  /* Es texto decorativo: no debe interceptar los toques de la pantalla táctil. */
-  pointer-events: none;
-}
-
-.credit a {
-  color: inherit;
-  text-decoration-color: rgba(255, 255, 255, 0.3);
-}
-
-@media (max-height: 520px) {
-  .credit__caption {
-    display: none;
-  }
-}
-
 /* ---------------------------------------------------------------------------
-   Vertical (la pantalla de 27" de la Pi, 1080×1920):
-   el reloj arriba y la tarjeta del tiempo debajo, con letra y aire de sobra
-   para verse de lejos y tocarse con el dedo.
+   Vertical (la pantalla de la Pi). Las dos tarjetas de arriba son cuadradas y
+   miden 12×12 cm, así que su contenido se mide con unidades de contenedor
+   (cqw/cqh): el reloj y las tareas quedan igual de bien a cualquier tamaño, sin
+   depender de la resolución de la pantalla.
 --------------------------------------------------------------------------- */
 
-@media (orientation: portrait) {
-  .screen {
-    align-content: space-evenly;
-    gap: clamp(0.4rem, 2.2vmin, 1.5rem);
-    padding: clamp(0.8rem, 2vmin, 2rem);
-  }
-
-  .clock {
-    gap: clamp(0.4rem, 1.4vmin, 1.1rem);
-  }
-
-  .now__label,
-  .now__week {
-    font-size: clamp(0.7rem, 1.8vmin, 1rem);
-  }
-
-  .clock__time {
-    font-size: clamp(3rem, 12vmin, 8.5rem);
-  }
-
-  .clock__rule {
-    width: clamp(3.5rem, 11vmin, 9rem);
-  }
-
-  .clock__date {
-    font-size: clamp(1rem, 2.5vmin, 1.8rem);
-  }
-
-  .widget--now,
-  .widget--calendar,
-  .widget--tasks,
-  .widget--pdf {
-    width: auto;
-  }
-
-  .widget--now,
-  .widget--calendar {
-    justify-self: stretch;
-  }
-
-  .widget--now {
-    gap: clamp(0.55rem, 1.6vmin, 1.2rem);
-    padding: clamp(0.9rem, 2.2vmin, 1.8rem);
-    border-radius: clamp(1rem, 3vmin, 2.2rem);
-  }
-
-  .weather {
-    gap: clamp(0.45rem, 1.4vmin, 1.05rem);
-  }
-
-  .widget--calendar,
-  .widget--tasks,
-  .widget--pdf {
-    border-radius: clamp(1rem, 3vmin, 2.2rem);
-  }
-
-  .widget--pdf {
-    flex-direction: column;
-    align-items: stretch;
-    gap: clamp(0.4rem, 1.2vmin, 0.8rem);
-    padding: clamp(0.7rem, 2vmin, 1.4rem);
-  }
-
-  .pdf__head {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.6rem;
-  }
-
-  .pdf__title {
-    font-size: clamp(1.1rem, 3vmin, 2rem);
-  }
-
-  .pdf__body {
-    flex: 1;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .pdf__thumb {
-    height: clamp(3rem, 10vmin, 7rem);
-  }
-
-  .pdf__hint {
-    font-size: clamp(0.8rem, 2.1vmin, 1.25rem);
-  }
-
-  .widget--calendar,
-  .widget--tasks {
-    gap: clamp(0.55rem, 1.7vmin, 1.3rem);
-    padding: clamp(1rem, 2.7vmin, 2.2rem);
-  }
-
-  .calendar__title,
-  .tasks__heading {
-    font-size: clamp(1.3rem, 3.7vmin, 2.3rem);
-  }
-
-  .calendar__account,
-  .tasks__count,
-  .tasks__due {
-    font-size: clamp(0.62rem, 1.6vmin, 0.9rem);
-  }
-
-  .calendar__hint,
-  .calendar__empty,
-  .tasks__hint,
-  .tasks__empty {
-    font-size: clamp(0.9rem, 2.4vmin, 1.4rem);
-  }
-
-  .calendar__day {
-    font-size: clamp(0.68rem, 1.8vmin, 1rem);
-  }
-
-  .calendar__time {
-    width: clamp(3.5rem, 9.5vmin, 5.5rem);
-    font-size: clamp(0.85rem, 2.2vmin, 1.25rem);
-  }
-
-  .calendar__what {
-    font-size: clamp(0.95rem, 2.5vmin, 1.5rem);
-  }
-
-  .calendar__where {
-    font-size: clamp(0.65rem, 1.7vmin, 0.95rem);
-  }
-
-  .tasks__item {
-    font-size: clamp(0.9rem, 2.3vmin, 1.35rem);
-  }
-
-  .calendar__event {
-    padding: clamp(0.25rem, 0.7vmin, 0.45rem) 0;
-  }
-
-  .calendar__foot,
-  .tasks__foot {
-    font-size: clamp(0.6rem, 1.5vmin, 0.85rem);
-  }
-
-  .weather__place {
-    font-size: clamp(1.3rem, 3.7vmin, 2.3rem);
-  }
-
-  .weather__refresh,
-  .calendar__refresh {
-    width: clamp(2.5rem, 6.4vmin, 3.4rem);
-    height: clamp(2.5rem, 6.4vmin, 3.4rem);
-  }
-
-  .weather__icon {
-    width: clamp(2.8rem, 8.5vmin, 4.6rem);
-  }
-
-  .weather__value {
-    font-size: clamp(2.8rem, 9.5vmin, 5.6rem);
-  }
-
-  .weather__extreme {
-    font-size: clamp(0.8rem, 2.1vmin, 1.2rem);
-  }
-
-  .weather__condition {
-    font-size: clamp(1rem, 3vmin, 1.75rem);
-  }
-
-  .weather__details {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(0.4rem, 1.5vmin, 1rem);
-  }
-
-  .weather__detail--extra {
-    display: block;
-  }
-
-  .weather__detail dt {
-    font-size: clamp(0.64rem, 1.7vmin, 0.95rem);
-  }
-
-  .weather__detail dd {
-    font-size: clamp(0.95rem, 2.6vmin, 1.5rem);
-  }
-
-  .weather__day {
-    border-radius: 0.8rem;
-    padding: clamp(0.15rem, 0.35vmin, 0.3rem) 0;
-  }
-
-  .weather__day svg {
-    width: clamp(1.1rem, 2.7vmin, 1.6rem);
-  }
-
-  .weather__day-name {
-    font-size: clamp(0.74rem, 2vmin, 1.1rem);
-  }
-
-  .weather__day-temps {
-    font-size: clamp(0.82rem, 2.2vmin, 1.2rem);
-  }
-
-  .weather__foot {
-    font-size: clamp(0.62rem, 1.6vmin, 0.9rem);
-  }
-
-  /* En vertical la franja va en rejilla 3×2: caben más titulares enteros que en
-     cinco filas, que pedirían media pantalla. */
-  .news-strip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(0.2rem, 0.7vmin, 0.45rem);
-    width: min(100%, 54rem);
-    justify-self: center;
-  }
-
-  .news {
-    gap: clamp(0.15rem, 0.5vmin, 0.3rem);
-    padding: clamp(0.35rem, 1vmin, 0.6rem) clamp(0.5rem, 1.4vmin, 0.9rem);
-  }
-
-  .news__source {
-    font-size: clamp(0.52rem, 1.3vmin, 0.78rem);
-  }
-
-  .news__title {
-    font-size: clamp(0.68rem, 1.7vmin, 1.05rem);
-    -webkit-line-clamp: 1;
-  }
-
-  .news__dot {
-    width: 0.26em;
-    height: 0.26em;
-  }
-
-  .credit {
-    top: max(0.9vmin, 0.45rem);
-    bottom: auto;
-    font-size: clamp(0.6rem, 1.4vmin, 0.9rem);
-  }
+.widget--now {
+  container-type: size;
+  width: var(--cm12);
+  height: var(--cm12);
+  justify-content: space-between;
+  gap: 0;
+  padding: 5.5cqw;
+  text-align: left;
+  overflow: hidden;
 }
 
-/* En apaisado no cabe todo: fuera amanecer/anochecer y el sexto día. */
+.now__label,
+.now__week {
+  font-size: 3.6cqw;
+}
+
+.clock {
+  gap: 1.2cqw;
+}
+
+.clock__time {
+  font-size: 25cqw;
+}
+
+.clock__rule {
+  width: 38cqw;
+}
+
+.clock__date {
+  font-size: 5.2cqw;
+}
+
+/* Dentro del cuadrado solo cabe el tiempo de ahora: la previsión de días y el
+   detalle (sensación, humedad, viento, lluvia, amanecer…) no entran a 12 cm. */
+.widget--now .weather {
+  gap: 1.4cqw;
+}
+
+.widget--now .weather__head {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.widget--now .weather__place {
+  font-size: 6cqw;
+}
+
+.widget--now .weather__refresh {
+  width: 8.5cqw;
+  height: 8.5cqw;
+}
+
+.widget--now .weather__hero {
+  gap: 3cqw;
+  margin-top: 1.5cqw;
+}
+
+.widget--now .weather__icon {
+  width: 15cqw;
+}
+
+.widget--now .weather__value {
+  font-size: 18cqw;
+}
+
+.widget--now .weather__extreme,
+.widget--now .weather__condition {
+  font-size: 4.4cqw;
+}
+
+.widget--now .weather__details,
+.widget--now .weather__daily,
+.widget--now .weather__foot {
+  display: none;
+}
+
+/* Las tareas, también cuadradas (12×12 cm). */
+.widget--tasks {
+  container-type: size;
+  height: var(--cm12);
+  gap: 3cqw;
+  padding: 6cqw;
+  overflow: hidden;
+}
+
+.widget--tasks .tasks__heading {
+  font-size: 9cqw;
+}
+
+.widget--tasks .tasks__count {
+  font-size: 4.6cqw;
+}
+
+.widget--tasks .tasks__item {
+  font-size: 6.6cqw;
+  gap: 2.4cqw;
+}
+
+.widget--tasks .tasks__list {
+  gap: 1.6cqw;
+}
+
+.widget--tasks .tasks__due,
+.widget--tasks .tasks__more,
+.widget--tasks .tasks__foot {
+  font-size: 4.4cqw;
+}
+
+/* El menú: el ancho del calendario y 10 cm de alto. */
+.widget--pdf {
+  container-type: size;
+  height: var(--cm10);
+  gap: 2.5cqw;
+  padding: 3.4cqw 4cqw;
+  overflow: hidden;
+}
+
+.pdf__title {
+  font-size: 3.6cqw;
+}
+
+.pdf__file {
+  font-size: 2.6cqw;
+}
+
+.pdf__thumb {
+  height: 66cqh;
+}
+
+.pdf__hint {
+  font-size: 3.2cqw;
+}
+
+.pdf__meta {
+  font-size: 2.6cqw;
+}
+
+/* Los titulares se reparten lo que queda: con cuatro fuentes, dos columnas. */
+.news-strip {
+  gap: clamp(0.4rem, 1.4vmin, 1rem);
+  grid-template-columns: repeat(var(--news-cols, 3), minmax(0, 1fr));
+}
+
+.news {
+  gap: 1.4vmin;
+  padding: 1.6vmin 1.8vmin;
+}
+
+.news__source {
+  font-size: 1.5vmin;
+}
+
+.news__title {
+  font-size: 2.1vmin;
+  line-height: 1.32;
+  -webkit-line-clamp: 5;
+}
+
 @media (orientation: landscape) {
   .weather__day:nth-child(n + 6) {
     display: none;
@@ -1275,6 +1251,36 @@
   }
 }
 
+/* En apaisado los titulares van todos en una fila. */
+@media (orientation: landscape) {
+  .news-strip {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  /* Y las tarjetas de tamaño físico (12 y 10 cm) se sueltan: en apaisado no
+     caben a tamaño real, así que miden lo que su contenido. */
+  .widget--now,
+  .widget--tasks,
+  .widget--pdf {
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Ojo: `revert` no vale aquí (devolvería el estilo del navegador, no el
+     nuestro), así que se repone el valor que tenían. */
+  .widget--now .weather__details {
+    display: grid;
+  }
+
+  .widget--now .weather__daily,
+  .widget--now .weather__foot {
+    display: flex;
+  }
+}
+
 /* --- animaciones --------------------------------------------------------- */
 
 @keyframes widget-in {
@@ -1305,6 +1311,13 @@
   }
 
   .viewer {
+    animation: none;
+  }
+
+  /* Ni las manchas del fondo ni las olas: quietas, que es lo que pide quien
+     tiene el movimiento reducido. */
+  .backdrop__glow,
+  .backdrop__wave {
     animation: none;
   }
 }

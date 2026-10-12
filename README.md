@@ -4,9 +4,10 @@ Panel familiar para una **Raspberry Pi 4 con pantalla táctil**, servido en loca
 mostrado a pantalla completa en **Chromium en modo kiosco**.
 
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
-(`node:sqlite`, sin dependencias nativas) en el servidor. Cinco bloques: **hora y
-tiempo**, **agenda**, **tareas**, **el menú** de la carpeta compartida y una
-**franja de titulares** de prensa.
+(`node:sqlite`, sin dependencias nativas) en el servidor. Cinco bloques — **hora y
+tiempo**, **tareas**, **agenda**, **menú** de la carpeta compartida y **titulares**
+de prensa— colocados con **medidas en centímetros** sobre un fondo animado violeta y
+azul.
 
 ![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
@@ -17,7 +18,8 @@ tiempo**, **agenda**, **tareas**, **el menú** de la carpeta compartida y una
 ### Fase 1 — pantalla de inicio ✅
 
 - Fondo a pantalla completa con una foto de **La Sagrada Família** (façana de la
-  Nativitat, Plaça de Gaudí).
+  Nativitat, Plaça de Gaudí). *(En la fase 7 el fondo pasó a ser animado, sin foto;
+  de ahí que ya no haya crédito que enseñar.)*
 - **Hora** en grande (24 h, cifras tabulares, dos puntos que parpadean cada segundo)
   y **fecha larga en español** (`Lunes, 12 de octubre de 2026`).
 - El reloj se reajusta al segundo exacto del sistema en cada tick
@@ -106,8 +108,9 @@ vez). Los puntitos dicen por cuál va, de los ocho que guarda de cada feed.
   enseña los últimos buenos en vez de vaciarse.
 - Los titulares **no son enlaces** a propósito: en el kiosco, un toque dejaría el
   panel metido en una noticia y ya no volvería solo.
-- Si hay menos de cinco fuentes, la franja se adapta; y si no hay alto suficiente
-  (la pantalla de 7"), se quita entera antes que enseñarla a medias.
+- Si hay menos fuentes de las que caben, la franja se adapta (con cuatro, dos
+  columnas; con dos o menos, una); y si no hay alto suficiente (la pantalla de 7"),
+  se quita entera antes que enseñarla a medias.
 
 ### Fase 6 — el menú en PDF, desde la carpeta compartida ✅
 
@@ -131,6 +134,35 @@ pequeño y, **al tocarla, se abre a pantalla completa** encima del panel.
   titulares no son enlaces, por lo mismo): en un kiosco, irse a un visor aparte es
   quedarse atrapado en él.
 
+### Fase 7 — fondo animado y reparto en centímetros ✅
+
+Fuera la foto: el fondo es ahora un **degradado violeta y azul con manchas que se
+mueven despacio y unas olas en la esquina inferior derecha**, todo con CSS y SVG
+(solo `transform` y opacidad, que es lo que la GPU de la Pi mueve sin sudar; nada de
+filtros animados). Sin foto no hay crédito que enseñar, y desaparece el
+`PhotoCredit`.
+
+Y el reparto de la pantalla está pedido en **centímetros**, no en píxeles: la
+pantalla de la Pi es de 27" con 1080×1920, o sea 81,6 px/pulgada → **32,12 px por
+centímetro** (`--cm` en `App.css`).
+
+| Zona | Medida |
+|------|--------|
+| Arriba izquierda | hora y tiempo · **12 × 12 cm** |
+| Arriba derecha | tareas · **12 × 12 cm** |
+| Debajo | agenda · ancho completo, la altura que pida su contenido |
+| Debajo | menú (el PDF) · ancho de la agenda × **10 cm** |
+| Lo que queda | titulares de prensa |
+
+Las dos tarjetas cuadradas miden su contenido con **unidades de contenedor**
+(`cqw`/`cqh`): el reloj se ve igual de grande a cualquier resolución, porque no
+depende de la pantalla sino de la tarjeta. Dentro de esos 12 cm no cabe la previsión
+de días ni el detalle de la meteo (sensación, humedad, viento…), así que ahí se
+enseña **lo esencial**: la hora, la fecha y el tiempo de ahora con máx/mín.
+
+En apaisado las medidas físicas no caben (12 + 10 cm se comen los 1080 de alto), así
+que la unidad se encoge y las tarjetas vuelven a medir lo que piden sus contenidos.
+
 ---
 
 ## Estructura
@@ -139,7 +171,8 @@ pequeño y, **al tocarla, se abre a pantalla completa** encima del panel.
 Family_dash/
 ├── index.html                  # <title>, viewport, tema oscuro, notranslate
 ├── public/
-│   └── sagrada-familia.jpg     # foto de fondo (1920×1280, CC BY-SA 4.0)
+│   ├── favicon.svg             # icono
+│   └── icons.svg               # juego de iconos SVG
 ├── scripts/
 │   ├── kiosk.sh                # lanza Chromium a pantalla completa
 │   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
@@ -182,21 +215,20 @@ Family_dash/
 │   └── ejemplo/                # menú de ejemplo (inventado) para el modo simulado
 └── src/
     ├── App.tsx                 # compone los cinco bloques
-    ├── App.css                 # layout + tarjetas, franja y visor del PDF
+    ├── App.css                 # medidas en cm, tarjetas, franja y visor del PDF
     ├── index.css               # reset + variables de tema
-    ├── config.ts               # idioma, cadencias de refresco, créditos
+    ├── config.ts               # idioma y cadencias de refresco
     ├── components/
-    │   ├── Background.tsx      # foto + degradados para legibilidad
+    │   ├── Background.tsx      # fondo animado (violeta/azul + olas)
     │   ├── NowWidget.tsx       # tarjeta 1: la hora, la fecha y el tiempo juntos
     │   ├── ClockWidget.tsx     #   · el reloj (bloque, sin tarjeta propia)
     │   ├── WeatherWidget.tsx   #   · el tiempo de la localidad (bloque)
-    │   ├── CalendarWidget.tsx  # tarjeta 2: próximos eventos del calendario
-    │   ├── TasksWidget.tsx     # tarjeta 3: tareas pendientes
-    │   ├── NewsStrip.tsx       # franja de titulares (una tarjeta por fuente)
-    │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
+    │   ├── TasksWidget.tsx     # tarjeta 2: tareas pendientes
+    │   ├── CalendarWidget.tsx  # tarjeta 3: próximos eventos del calendario
     │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
-    │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
-    │   └── PhotoCredit.tsx     # crédito CC BY-SA
+    │   ├── NewsStrip.tsx       # tarjeta 5: franja de titulares
+    │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
+    │   └── WeatherIcon.tsx     # iconos SVG por código WMO
     ├── hooks/
     │   ├── useNow.ts           # reloj alineado al segundo
     │   ├── useWeather.ts       # pide /api/weather y se refresca sola
@@ -537,12 +569,14 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 
 | Fase | Contenido | Estado |
 |------|-----------|--------|
-| 1 | Pantalla de inicio: hora, fecha y foto | ✅ |
-| 2 | Backend Node + Express + SQLite y dos widgets (reloj / tiempo) | ✅ |
-| 3 | Agenda: Google Calendar y tareas (widget + OAuth propio) | ✅ código hecho; falta conectar tu cuenta |
-| 4 | Noticias RSS | pendiente |
-| 5 | Menú semanal desde el Synology Drive | pendiente |
-| 6 | Navegación táctil entre pantallas | pendiente |
+| 1 | Pantalla de inicio: hora, fecha y fondo | ✅ (el fondo cambió en la 7) |
+| 2 | Backend Node + Express + SQLite y el tiempo | ✅ |
+| 3 | Google Calendar y tareas, con OAuth propio | ✅ |
+| 4 | La hora, la fecha y el tiempo en una sola tarjeta | ✅ |
+| 5 | Franja de titulares RSS | ✅ |
+| 6 | El menú semanal, en PDF desde la carpeta compartida | ✅ |
+| 7 | Fondo animado y reparto en centímetros | ✅ |
+| 8 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:
 
@@ -560,8 +594,6 @@ Notas de arquitectura para lo que viene:
 
 ## Créditos
 
-Foto: *La Sagrada Família, façana de la Nativitat (Plaça de Gaudí)* de
-**Txllxt TxllxT**, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/),
-vía [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Barcelona_-_Pla%C3%A7a_de_Gaud%C3%AD_-_View_SW_on_La_Sagrada_Fam%C3%ADlia_-_Nativity_fa%C3%A7ade_I.jpg).
-El crédito aparece discretamente en la esquina inferior izquierda, como exige la
-licencia. Meteo: [Open-Meteo](https://open-meteo.com) (uso no comercial, sin API key).
+Meteo: [Open-Meteo](https://open-meteo.com) (uso no comercial, sin API key). El fondo
+es degradado y olas hechos con CSS y SVG, así que no hay ninguna imagen de terceros
+que acreditar.

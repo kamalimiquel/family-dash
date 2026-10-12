@@ -3,7 +3,6 @@ import { CalendarWidget } from './components/CalendarWidget'
 import { NewsStrip } from './components/NewsStrip'
 import { NowWidget } from './components/NowWidget'
 import { PdfWidget } from './components/PdfWidget'
-import { PhotoCredit } from './components/PhotoCredit'
 import { TasksWidget } from './components/TasksWidget'
 import { useAgenda } from './hooks/useAgenda'
 import { useNews } from './hooks/useNews'
@@ -23,11 +22,10 @@ export default function App() {
     <main className="screen">
       <Background />
       <NowWidget now={now} weather={weather} />
-      <CalendarWidget state={agenda} />
       <TasksWidget state={agenda} />
+      <CalendarWidget state={agenda} />
       <PdfWidget state={pdf} />
       <NewsStrip state={news} />
-      <PhotoCredit />
     </main>
   )
 }

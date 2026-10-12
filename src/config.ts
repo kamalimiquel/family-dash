@@ -27,13 +27,5 @@ export const NEWS_ROTATE_MS = 10 * 1000
 /** Cada cuánto se vuelve a mirar si ha cambiado el PDF de la carpeta compartida. */
 export const PDF_REFRESH_MS = 5 * 60 * 1000
 
-/** Background photo — La Sagrada Família, Barcelona. */
-export const PHOTO = {
-  src: '/sagrada-familia.jpg',
-  caption: 'La Sagrada Família, façana de la Nativitat (Plaça de Gaudí)',
-  author: 'Txllxt TxllxT',
-  license: 'CC BY-SA 4.0',
-  licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
-  sourceUrl:
-    'https://commons.wikimedia.org/wiki/File:Barcelona_-_Pla%C3%A7a_de_Gaud%C3%AD_-_View_SW_on_La_Sagrada_Fam%C3%ADlia_-_Nativity_fa%C3%A7ade_I.jpg',
-} as const
+/* Los colores del fondo animado (violeta/azul) viven en `App.css`: son estilo,
+   no configuración. */
