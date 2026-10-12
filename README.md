@@ -67,8 +67,10 @@ en vez de cortarlos en silencio.
   quedarse en blanco (`reason` en la respuesta), y el reloj y el tiempo siguen
   funcionando.
 - Para trabajar en la interfaz sin credenciales hay datos simulados:
-  `DASH_MOCK=1 npm run dev:api`. Nunca se activa solo, y las respuestas lo marcan
-  con `meta.source: "mock"`.
+  `DASH_MOCK=1 DASH_DB=/tmp/ejemplo.sqlite npm run dev:api`. Nunca se activa solo,
+  y las respuestas lo marcan con `meta.source: "mock"`. Usa una **base de datos
+  aparte** (`DASH_DB`): si no, los datos de ejemplo se quedan en la caché del panel
+  de verdad y los sigues viendo cuando apagues el mock.
 
 ![Agenda y tareas, con datos de ejemplo](docs/screenshots/agenda-1080x1920.png)
 
