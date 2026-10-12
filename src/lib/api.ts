@@ -1,4 +1,4 @@
-import type { CalendarResponse, TasksResponse, WeatherSnapshot } from './types'
+import type { CalendarResponse, NewsResponse, TasksResponse, WeatherSnapshot } from './types'
 
 /** Error con la información que necesita la UI para decidir qué enseñar. */
 export class ApiError extends Error {
@@ -41,4 +41,8 @@ export function fetchCalendar(days: number, signal?: AbortSignal): Promise<Calen
 
 export function fetchTasks(signal?: AbortSignal): Promise<TasksResponse> {
   return getJson<TasksResponse>('/api/tasks', signal)
+}
+
+export function fetchNews(signal?: AbortSignal): Promise<NewsResponse> {
+  return getJson<NewsResponse>('/api/news', signal)
 }

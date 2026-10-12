@@ -137,3 +137,27 @@ export interface TasksResponse {
   reason: AgendaReason | null
   meta: CacheMeta | null
 }
+
+/* --- noticias (RSS) ------------------------------------------------------ */
+
+export interface NewsItem {
+  title: string
+  link: string | null
+  /** ISO 8601, o `null` si el feed no traía fecha. */
+  date: string | null
+}
+
+export interface NewsFeed {
+  name: string
+  url: string
+  items: NewsItem[]
+  /** Motivo por el que esta fuente no trajo nada (las demás siguen). */
+  error: string | null
+  stale: boolean
+  cached: boolean
+}
+
+export interface NewsResponse {
+  feeds: NewsFeed[]
+  meta: CacheMeta
+}

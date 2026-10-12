@@ -6,6 +6,7 @@ import { databaseInfo, openDatabase } from './db.js'
 import { googleStatus } from './google/auth.js'
 import { createAgendaRouter } from './routes/agenda.js'
 import { createGoogleRouter } from './routes/google.js'
+import { createNewsRouter } from './routes/news.js'
 import { createSettingsRouter } from './routes/settings.js'
 import { createWeatherRouter } from './routes/weather.js'
 
@@ -32,6 +33,7 @@ app.use('/api', createWeatherRouter(db))
 app.use('/api', createSettingsRouter(db))
 app.use('/api', createGoogleRouter(db))
 app.use('/api', createAgendaRouter(db))
+app.use('/api', createNewsRouter(db))
 
 // Cualquier otra ruta /api: 404 en JSON, no HTML.
 app.use('/api', (_req, res) => {

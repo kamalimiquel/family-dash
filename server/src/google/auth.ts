@@ -1,4 +1,5 @@
 import type { Db } from '../db.js'
+import { isMock } from '../mock.js'
 
 /**
  * OAuth 2.0 con Google, a mano y con `fetch` (sin la librería googleapis):
@@ -282,6 +283,4 @@ export function googleStatus(db: Db): GoogleStatus {
 }
 
 /** Datos simulados: SOLO si alguien pone DASH_MOCK=1 a propósito. */
-export function isMock(): boolean {
-  return process.env.DASH_MOCK === '1'
-}
+export { isMock } from '../mock.js'

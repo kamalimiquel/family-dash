@@ -4,8 +4,8 @@ Panel familiar para una **Raspberry Pi 4 con pantalla táctil**, servido en loca
 mostrado a pantalla completa en **Chromium en modo kiosco**.
 
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
-(`node:sqlite`, sin dependencias nativas) en el servidor. Tres tarjetas: **hora y
-tiempo**, **agenda** y **tareas**.
+(`node:sqlite`, sin dependencias nativas) en el servidor. Cuatro bloques: **hora y
+tiempo**, **agenda**, **tareas** y una **franja de titulares** de prensa.
 
 ![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
@@ -89,6 +89,25 @@ tiempo, agenda, tareas) y en apaisado la primera ocupa la columna izquierda ente
 mientras agenda y tareas se apilan a la derecha. En la pantalla de 7" (800×480) el
 reloj se encoge y se cae la previsión de días, o no cabe.
 
+### Fase 5 — franja de titulares de prensa ✅
+
+Abajo del todo, **una tarjeta por medio**: cada una enseña un titular cada vez y va
+rotando los suyos (10 s, con arranque escalonado para que no cambien todas a la
+vez). Los puntitos dicen por cuál va, de los ocho que guarda de cada feed.
+
+- **RSS y Atom con un parser propio** (`server/src/news/rss.ts`): titulares, enlaces
+  y fechas, con CDATA, entidades y los dos formatos. Sin dependencias.
+- **Las fuentes se configuran** con `PUT /api/settings` y viven en la base de datos
+  del dispositivo, no en el código: el repositorio no lleva los medios de ninguna
+  casa, y cambiar de fuentes no es tocar código.
+- **Una caché por fuente** (20 minutos): si un medio se cae, esa tarjeta lo dice en
+  rojo y las otras cuatro siguen con sus titulares; si ya había titulares guardados,
+  enseña los últimos buenos en vez de vaciarse.
+- Los titulares **no son enlaces** a propósito: en el kiosco, un toque dejaría el
+  panel metido en una noticia y ya no volvería solo.
+- Si hay menos de cinco fuentes, la franja se adapta; y si no hay alto suficiente
+  (la pantalla de 7"), se quita entera antes que enseñarla a medias.
+
 ---
 
 ## Estructura
@@ -113,21 +132,28 @@ Family_dash/
 │       ├── settings.ts         # ajustes persistidos (localidad) y su validación
 │       ├── routes/
 │       │   ├── weather.ts      # GET /api/weather
-│       │   ├── settings.ts     # GET/PUT /api/settings
+│       │   ├── settings.ts     # GET/PUT /api/settings (localidad y fuentes)
 │       │   ├── google.ts       # estado y flujo de consentimiento (solo localhost)
-│       │   └── agenda.ts       # GET /api/calendar y /api/tasks
+│       │   ├── agenda.ts       # GET /api/calendar y /api/tasks
+│       │   └── news.ts         # GET /api/news
+│       ├── mock.ts             # isMock(): DASH_MOCK=1, nada más
 │       ├── google/
 │       │   ├── auth.ts         # OAuth, token en SQLite y refresco automático
 │       │   ├── api.ts          # GET autenticado contra las APIs de Google
 │       │   ├── calendar.ts     # eventos normalizados
 │       │   ├── tasks.ts        # tareas pendientes de todas las listas
 │       │   └── mock.ts         # datos simulados (solo con DASH_MOCK=1)
-│       └── weather/
-│           ├── openMeteo.ts    # cliente de Open-Meteo y normalización
-│           └── wmo.ts          # códigos WMO → texto en español + icono
+│       ├── weather/
+│       │   ├── openMeteo.ts    # cliente de Open-Meteo y normalización
+│       │   └── wmo.ts          # códigos WMO → texto en español + icono
+│       └── news/
+│           ├── rss.ts          # parser mínimo de RSS 2.0 y Atom
+│           ├── sources.ts      # fuentes en la tabla settings
+│           ├── index.ts        # descarga, caché por fuente y respaldo
+│           └── mock.ts         # titulares de ejemplo (solo con DASH_MOCK=1)
 └── src/
-    ├── App.tsx                 # compone las tres tarjetas
-    ├── App.css                 # layout + tarjetas de la hora/tiempo, la agenda y las tareas
+    ├── App.tsx                 # compone las tres tarjetas y la franja de titulares
+    ├── App.css                 # layout + tarjetas y la franja de noticias
     ├── index.css               # reset + variables de tema
     ├── config.ts               # idioma, cadencias de refresco, créditos
     ├── components/
@@ -137,12 +163,15 @@ Family_dash/
     │   ├── WeatherWidget.tsx   #   · el tiempo de la localidad (bloque)
     │   ├── CalendarWidget.tsx  # tarjeta 2: próximos eventos del calendario
     │   ├── TasksWidget.tsx     # tarjeta 3: tareas pendientes
+    │   ├── NewsStrip.tsx       # franja de titulares (una tarjeta por fuente)
+    │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
     │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
     │   └── PhotoCredit.tsx     # crédito CC BY-SA
     ├── hooks/
     │   ├── useNow.ts           # reloj alineado al segundo
     │   ├── useWeather.ts       # pide /api/weather y se refresca sola
-    │   └── useAgenda.ts        # pide /api/calendar y /api/tasks
+    │   ├── useAgenda.ts        # pide /api/calendar y /api/tasks
+    │   └── useNews.ts          # pide /api/news y se refresca sola
     └── lib/
         ├── api.ts              # cliente HTTP tipado
         ├── time.ts             # formato de fecha/hora + etiquetas de la agenda
@@ -157,10 +186,11 @@ Family_dash/
 |--------|------|----------|
 | GET | `/api/health` | Estado, versión de Node, ruta de la BD y nº de entradas en caché |
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
-| GET | `/api/settings` | Localidad configurada (y la de por defecto) |
-| PUT | `/api/settings` | Cambia la localidad: `{"place":{"name":"Barcelona","latitude":41.3874,"longitude":2.1686,"timezone":"Europe/Madrid"}}` |
+| GET | `/api/settings` | Localidad y fuentes de noticias configuradas (y las de por defecto) |
+| PUT | `/api/settings` | Cambia la localidad y/o las fuentes (ver ejemplos abajo) |
 | GET | `/api/calendar` | Próximos eventos agrupables por día (`?days=7`, `?refresh=1`) |
 | GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
+| GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
 | GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |
 | POST | `/api/google/app` | Guarda `client_id` y `client_secret` — **solo desde localhost** |
 | GET | `/api/google/auth-url` | Devuelve la URL de consentimiento — **solo desde localhost** |
@@ -181,8 +211,11 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
 
 - `cache(key, payload, source, fetched_at, expires_at)` — respuestas de APIs con
   su caducidad. TTL: meteo **10 minutos** (`WEATHER_TTL_MS`), calendario y tareas
-  **5 minutos** (`CALENDAR_TTL_MS`, `TASKS_TTL_MS`).
-- `settings(key, value, updated_at)` — por ahora, la localidad del tiempo.
+  **5 minutos** (`CALENDAR_TTL_MS`, `TASKS_TTL_MS`) y noticias **20 minutos**
+  (`NEWS_TTL_MS`), con una entrada por fuente.
+- `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`) y
+  las fuentes de noticias (`news.sources`). Las dos cosas viven aquí y no en el
+  código: cada casa pone las suyas.
 - `google_app(id=1, client_id, client_secret, updated_at)` — credenciales de la
   app de Google Cloud (o mejor por entorno: `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`).
 - `google_account(id=1, email, refresh_token, access_token, access_expires_at, scope, …)`
@@ -196,6 +229,20 @@ curl -X PUT -H 'content-type: application/json' \
   -d '{"place":{"name":"Barcelona","country":"ES","latitude":41.3874,"longitude":2.1686,"timezone":"Europe/Madrid"}}' \
   http://localhost:4173/api/settings
 ```
+
+Y las fuentes de noticias (de una a ocho; el nombre es opcional y si falta se usa
+el dominio):
+
+```bash
+curl -X PUT -H 'content-type: application/json' \
+  -d '{"news":[{"name":"Ara","url":"https://www.ara.cat/rss/latest/"},
+               {"url":"https://newsfeed.zeit.de/index"},
+               {"url":"https://feeds.bbci.co.uk/news/world/rss.xml"}]}' \
+  http://localhost:4173/api/settings
+```
+
+El panel refresca los titulares cada 10 minutos, así que un cambio de fuentes tarda
+como mucho eso en verse; reiniciando el kiosco se ve al momento.
 
 ---
 

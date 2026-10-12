@@ -26,6 +26,37 @@ export const CALENDAR_DAYS = Number(process.env.CALENDAR_DAYS ?? 7)
 export const CALENDAR_TTL_MS = Number(process.env.CALENDAR_TTL_MS ?? 5 * 60 * 1000)
 export const TASKS_TTL_MS = Number(process.env.TASKS_TTL_MS ?? 5 * 60 * 1000)
 
+/** Los feeds de noticias cambian, pero no tanto: veinte minutos va sobrado. */
+export const NEWS_TTL_MS = Number(process.env.NEWS_TTL_MS ?? 20 * 60 * 1000)
+
+/** Titulares que se guardan por fuente (la pantalla enseña uno cada vez). */
+export const NEWS_ITEMS_PER_SOURCE = Number(process.env.NEWS_ITEMS_PER_SOURCE ?? 8)
+
+/** Tope por feed: una web lenta no puede retrasar a las demás. */
+export const NEWS_TIMEOUT_MS = Number(process.env.NEWS_TIMEOUT_MS ?? 10_000)
+
+/** Tope de lectura por feed (un XML de noticias no llega ni de lejos). */
+export const NEWS_MAX_BYTES = Number(process.env.NEWS_MAX_BYTES ?? 512 * 1024)
+
+/** Fuente de noticias: un nombre para la pantalla y la URL del feed. */
+export interface NewsSource {
+  name: string
+  url: string
+}
+
+/**
+ * Fuentes de ejemplo: medios generales, ninguna local y ninguna de casa. El panel
+ * de cada casa usa las que tenga guardadas en `settings`, que se cambian con
+ * `PUT /api/settings` sin tocar código.
+ */
+export const DEFAULT_NEWS_SOURCES: NewsSource[] = [
+  { name: 'Ara', url: 'https://www.ara.cat/rss/latest/' },
+  { name: 'Nació Digital', url: 'https://www.naciodigital.cat/rss' },
+  { name: 'DIE ZEIT', url: 'https://newsfeed.zeit.de/index' },
+  { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { name: 'The New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
+]
+
 export interface Place {
   name: string
   country?: string
