@@ -6,8 +6,7 @@ mostrado a pantalla completa en **Chromium en modo kiosco**.
 Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite**
 (`node:sqlite`, sin dependencias nativas) en el servidor. Cinco bloques — **hora y
 tiempo**, **tareas**, **agenda**, **menú** de la carpeta compartida y **titulares**
-de prensa— colocados con **medidas en centímetros** sobre un fondo animado violeta y
-azul.
+de prensa— colocados con **medidas en centímetros** sobre un **vídeo de fondo**.
 
 ![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
 
@@ -156,12 +155,52 @@ centímetro** (`--cm` en `App.css`).
 
 Las dos tarjetas cuadradas miden su contenido con **unidades de contenedor**
 (`cqw`/`cqh`): el reloj se ve igual de grande a cualquier resolución, porque no
-depende de la pantalla sino de la tarjeta. Dentro de esos 12 cm no cabe la previsión
-de días ni el detalle de la meteo (sensación, humedad, viento…), así que ahí se
-enseña **lo esencial**: la hora, la fecha y el tiempo de ahora con máx/mín.
+depende de la pantalla sino de la tarjeta. Con 12 cm de alto, dentro solo cabía lo
+esencial (la hora, la fecha y el tiempo de ahora); **en la fase 8 la tarjeta creció a
+12 × 19 cm y volvieron la previsión y el detalle**. Las medidas de la tabla también se
+revisaron en la fase 8.
 
 En apaisado las medidas físicas no caben (12 + 10 cm se comen los 1080 de alto), así
 que la unidad se encoge y las tarjetas vuelven a medir lo que piden sus contenidos.
+
+### Fase 8 — fondo de vídeo y medidas nuevas ✅
+
+El fondo es ahora un **vídeo**: una animación de seda violeta y azul que vive en
+`public/fondo.mp4` — 720×1280, 24 fotogramas por segundo, sin audio, 2 MB y 30 s en
+bucle. Va recortado a lo ancho (`object-fit: cover`), así que en la pantalla vertical
+se ve la franja central del original, que es justo por donde pasa la transición de
+color.
+
+Tres cosas del vídeo que conviene saber:
+
+- **El degradado de la fase 7 se queda detrás**, con sus manchas y sus olas, como red
+  de seguridad: si el vídeo no arranca se ve un fondo decente, no un hueco negro. El
+  póster (`fondo.jpg`) tapa el hueco mientras carga.
+- **Un velo por encima** (`backdrop__scrim`) le baja el brillo; sin él, las zonas
+  claras del vídeo se comen el texto de las tarjetas.
+- Si el sistema pide **movimiento reducido**, el vídeo ni se pone: quedan el degradado
+  y las olas.
+
+Y cuesta CPU, que es lo primero que hay que mirar en una Pi: con el vídeo puesto, la
+máquina se queda en torno al **40 % ocupada** (58 % en reposo, medido con `top`,
+1080p24 decodificado por software). El panel va fluido, pero queda anotado: si algún
+día va justa, lo primero que hay que bajar es el tamaño del vídeo.
+
+El reparto cambia de medidas:
+
+| Zona | Fase 7 | Fase 8 |
+|------|--------|--------|
+| Hora y tiempo | 12 × 12 cm | **12 × 19 cm** |
+| Tareas | 12 × 12 cm | 12 × 12 cm (pegada arriba) |
+| Agenda | ancho completo, alto del contenido | ancho completo, **22 cm** |
+| Menú (el PDF) | ancho de la agenda × 10 cm | igual |
+| Titulares | lo que queda | lo que queda (unos 200 px, **todos en una fila**) |
+
+Con 19 cm de alto, la tarjeta del tiempo vuelve a enseñar lo que a 12 cm no cabía: el
+detalle (sensación, humedad, viento, lluvia) y la previsión de los próximos días —
+**cuatro días**, porque siete en 12 cm de ancho se pisaban unos a otros. Y la agenda,
+al ser tan alta, reparte sus días por todo el alto para no quedarse medio vacía en una
+semana tranquila.
 
 ---
 
@@ -172,7 +211,9 @@ Family_dash/
 ├── index.html                  # <title>, viewport, tema oscuro, notranslate
 ├── public/
 │   ├── favicon.svg             # icono
-│   └── icons.svg               # juego de iconos SVG
+│   ├── icons.svg               # juego de iconos SVG
+│   ├── fondo.mp4               # vídeo de fondo (720×1280, mudo, en bucle)
+│   └── fondo.jpg               # póster del vídeo (mientras carga)
 ├── scripts/
 │   ├── kiosk.sh                # lanza Chromium a pantalla completa
 │   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
@@ -576,7 +617,8 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 | 5 | Franja de titulares RSS | ✅ |
 | 6 | El menú semanal, en PDF desde la carpeta compartida | ✅ |
 | 7 | Fondo animado y reparto en centímetros | ✅ |
-| 8 | Navegación táctil entre pantallas | pendiente |
+| 8 | Fondo de vídeo y medidas nuevas | ✅ |
+| 9 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:
 

@@ -1,8 +1,16 @@
+import { useEffect, useState } from 'react'
+
 /**
- * Fondo del panel: degradado violeta/azul con manchas que se mueven despacio y
- * unas olas en la esquina inferior derecha. Todo con CSS y SVG (transform y
- * opacidad, que es lo que la GPU de la Pi mueve sin despeinarse); nada de filtros
- * animados, que en una Raspberry se notan.
+ * Fondo del panel.
+ *
+ * Lo primero es el vídeo que se pidió: una animación de seda violeta y azul, muda
+ * y en bucle, recortada a lo ancho para llenar la pantalla vertical. Detrás se
+ * queda el degradado con las manchas y las olas de antes, que hace de red de
+ * seguridad: si el vídeo no arranca (o alguien tiene el movimiento reducido), se
+ * ve un fondo decente en vez de un hueco negro.
+ *
+ * El degradado solo gasta `transform` y opacidad, que es lo que la GPU de la Pi
+ * mueve sin despeinarse; nada de filtros animados, que en una Raspberry se notan.
  */
 
 /** Ola periódica (el periodo es la mitad del ancho, así el bucle no tiene costura). */
@@ -40,9 +48,28 @@ const WAVES = [
   },
 ]
 
+/** ¿Se ha pedido menos movimiento? Entonces el vídeo ni se pone. */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false)
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReduced(query.matches)
+
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  return reduced
+}
+
 export function Background() {
+  const reduced = useReducedMotion()
+
   return (
     <div className="backdrop" aria-hidden="true">
+      {/* Red de seguridad: se ve mientras el vídeo carga, y se queda si falla. */}
       <div className="backdrop__base" />
       <span className="backdrop__glow backdrop__glow--a" />
       <span className="backdrop__glow backdrop__glow--b" />
@@ -55,6 +82,24 @@ export function Background() {
           </g>
         ))}
       </svg>
+
+      {!reduced && (
+        <video
+          className="backdrop__video"
+          src="/fondo.mp4"
+          poster="/fondo.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          tabIndex={-1}
+        />
+      )}
+
+      {/* Velo: sin él, las zonas claras del vídeo se comen el texto. */}
+      <div className="backdrop__scrim" />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import type { CalendarEvent } from '../lib/types'
 import { formatDayLabel, formatTimeShort } from '../lib/time'
 
 /** Cuántos eventos se enseñan de golpe: el resto no cabe en la pantalla. */
-const MAX_EVENTS = 4
+const MAX_EVENTS = 8
 
 /** Motivos de "todavía no hay datos" explicados para la familia. */
 const REASON_TEXT: Record<string, string> = {

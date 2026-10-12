@@ -12,6 +12,8 @@
 :root {
   --cm: 32.12px;
   --cm12: calc(12 * var(--cm));
+  --cm19: calc(19 * var(--cm));
+  --cm22: calc(22 * var(--cm));
   --cm10: calc(10 * var(--cm));
 }
 
@@ -20,7 +22,7 @@
   inset: 0;
   display: grid;
   grid-template-columns: var(--cm12) minmax(0, 1fr) var(--cm12);
-  grid-template-rows: var(--cm12) auto var(--cm10) minmax(0, 1fr);
+  grid-template-rows: var(--cm19) var(--cm22) var(--cm10) minmax(0, 1fr);
   grid-template-areas:
     'now . tasks'
     'calendar calendar calendar'
@@ -91,6 +93,26 @@
     radial-gradient(120% 90% at 18% 0%, #2a1573 0%, rgba(42, 21, 115, 0) 62%),
     radial-gradient(100% 80% at 92% 12%, #10306e 0%, rgba(16, 48, 110, 0) 58%),
     linear-gradient(165deg, #090a22 0%, #130c36 45%, #07122c 100%);
+}
+
+/* El vídeo: mudo, en bucle y recortado a lo ancho (`cover`) para que llene la
+   pantalla vertical. Va por encima del degradado, que se queda debajo por si el
+   vídeo no arranca. El velo de encima es lo que mantiene legibles las tarjetas. */
+.backdrop__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 6, 26, 0.62) 0%, rgba(8, 6, 26, 0.38) 35%, rgba(8, 6, 26, 0.55) 100%),
+    radial-gradient(120% 80% at 50% 40%, rgba(10, 8, 32, 0) 40%, rgba(10, 8, 32, 0.45) 100%);
 }
 
 /* Manchas grandes que se mueven muy despacio: solo transform, que es lo que la
@@ -1011,10 +1033,10 @@
 .widget--now {
   container-type: size;
   width: var(--cm12);
-  height: var(--cm12);
+  height: var(--cm19);
   justify-content: space-between;
   gap: 0;
-  padding: 5.5cqw;
+  padding: 4.5cqw;
   text-align: left;
   overflow: hidden;
 }
@@ -1040,10 +1062,10 @@
   font-size: 5.2cqw;
 }
 
-/* Dentro del cuadrado solo cabe el tiempo de ahora: la previsión de días y el
-   detalle (sensación, humedad, viento, lluvia, amanecer…) no entran a 12 cm. */
+/* La tarjeta mide 12×19 cm, así que el tiempo vuelve a enseñarlo todo: el
+   detalle (sensación, humedad, viento…) y la previsión de los próximos días. */
 .widget--now .weather {
-  gap: 1.4cqw;
+  gap: 1.6cqw;
 }
 
 .widget--now .weather__head {
@@ -1078,15 +1100,92 @@
   font-size: 4.4cqw;
 }
 
-.widget--now .weather__details,
-.widget--now .weather__daily,
+.widget--now .weather__details {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6cqw 2.2cqw;
+}
+
+.widget--now .weather__detail-term,
+.widget--now .weather__detail-value {
+  font-size: 3.1cqw;
+}
+
+.widget--now .weather__daily {
+  gap: 0.8cqw;
+}
+
+.widget--now .weather__day-name,
+.widget--now .weather__day-value {
+  font-size: 2.7cqw;
+}
+
+.widget--now .weather__day-icon {
+  width: 8.5cqw;
+}
+
+/* Y solo cuatro días: con siete, en 12 cm de ancho los números se pisaban. */
+.widget--now .weather__day:nth-child(n + 5) {
+  display: none;
+}
+
 .widget--now .weather__foot {
   display: none;
 }
 
-/* Las tareas, también cuadradas (12×12 cm). */
+/* La agenda mide 22 cm de alto. Con cuatro eventos se queda medio vacía, así que
+   los días se reparten el alto a partes iguales (con una semana llena se aprietan
+   solos, sin desbordar) y la letra sube otro poco para llenar la tarjeta. */
+.widget--calendar {
+  container-type: size;
+}
+
+.widget--calendar .calendar__days {
+  flex: 1;
+  justify-content: space-around;
+}
+
+.widget--calendar .calendar__title {
+  font-size: 4.4cqw;
+}
+
+.widget--calendar .calendar__account,
+.widget--calendar .calendar__hint {
+  font-size: 1.9cqw;
+}
+
+.widget--calendar .calendar__day {
+  font-size: 2cqw;
+}
+
+.widget--calendar .calendar__what {
+  font-size: 2.2cqw;
+}
+
+.widget--calendar .calendar__time {
+  width: 11cqw;
+  font-size: 2cqw;
+}
+
+.widget--calendar .calendar__where {
+  font-size: 1.85cqw;
+}
+
+.widget--calendar .calendar__more,
+.widget--calendar .calendar__empty {
+  font-size: 1.9cqw;
+}
+
+.widget--calendar .calendar__foot,
+.widget--calendar .calendar__status,
+.widget--calendar .calendar__counts {
+  font-size: 1.75cqw;
+}
+
+/* Las tareas, también cuadradas (12×12 cm) y pegadas arriba: la fila es más
+   alta que ellas, porque la tarjeta de al lado mide 19 cm. */
 .widget--tasks {
   container-type: size;
+  align-self: start;
   height: var(--cm12);
   gap: 3cqw;
   padding: 6cqw;
@@ -1145,25 +1244,26 @@
   font-size: 2.6cqw;
 }
 
-/* Los titulares se reparten lo que queda: con cuatro fuentes, dos columnas. */
+/* Los titulares se reparten lo que queda: con 19 + 22 + 10 cm por delante, la
+   franja se queda en unos 200 px, así que van todos en una fila. */
 .news-strip {
-  gap: clamp(0.4rem, 1.4vmin, 1rem);
-  grid-template-columns: repeat(var(--news-cols, 3), minmax(0, 1fr));
+  gap: 0.8vmin;
+  grid-template-columns: repeat(var(--news-cols, 4), minmax(0, 1fr));
 }
 
 .news {
-  gap: 1.4vmin;
-  padding: 1.6vmin 1.8vmin;
+  gap: 1.1vmin;
+  padding: 1.5vmin;
 }
 
 .news__source {
-  font-size: 1.5vmin;
+  font-size: 1.45vmin;
 }
 
 .news__title {
-  font-size: 2.1vmin;
-  line-height: 1.32;
-  -webkit-line-clamp: 5;
+  font-size: 1.85vmin;
+  line-height: 1.3;
+  -webkit-line-clamp: 4;
 }
 
 @media (orientation: landscape) {
@@ -1259,7 +1359,7 @@
     grid-auto-columns: minmax(0, 1fr);
   }
 
-  /* Y las tarjetas de tamaño físico (12 y 10 cm) se sueltan: en apaisado no
+  /* Y las tarjetas de tamaño físico (12, 19 y 10 cm) se sueltan: en apaisado no
      caben a tamaño real, así que miden lo que su contenido. */
   .widget--now,
   .widget--tasks,
@@ -1267,17 +1367,6 @@
     width: auto;
     height: auto;
     overflow: visible;
-  }
-
-  /* Ojo: `revert` no vale aquí (devolvería el estilo del navegador, no el
-     nuestro), así que se repone el valor que tenían. */
-  .widget--now .weather__details {
-    display: grid;
-  }
-
-  .widget--now .weather__daily,
-  .widget--now .weather__foot {
-    display: flex;
   }
 }
 
