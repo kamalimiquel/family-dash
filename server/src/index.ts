@@ -3,6 +3,9 @@ import path from 'node:path'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import { DB_PATH, DIST_DIR, HOST, PORT } from './config.js'
 import { databaseInfo, openDatabase } from './db.js'
+import { googleStatus } from './google/auth.js'
+import { createAgendaRouter } from './routes/agenda.js'
+import { createGoogleRouter } from './routes/google.js'
 import { createSettingsRouter } from './routes/settings.js'
 import { createWeatherRouter } from './routes/weather.js'
 
@@ -21,11 +24,14 @@ app.get('/api/health', (_req, res) => {
     uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
     node: process.version,
     db: databaseInfo(db, DB_PATH),
+    google: googleStatus(db),
   })
 })
 
 app.use('/api', createWeatherRouter(db))
 app.use('/api', createSettingsRouter(db))
+app.use('/api', createGoogleRouter(db))
+app.use('/api', createAgendaRouter(db))
 
 // Cualquier otra ruta /api: 404 en JSON, no HTML.
 app.use('/api', (_req, res) => {
@@ -72,9 +78,10 @@ if (fs.existsSync(DIST_DIR)) {
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message = error instanceof Error ? error.message : String(error)
   const upstream = /open-meteo/i.test(message)
+  const google = /google/i.test(message) || /Google/.test(message)
   console.error('[error]', message)
-  res.status(upstream ? 502 : 500).json({
-    error: upstream ? 'weather_unavailable' : 'internal_error',
+  res.status(upstream || google ? 502 : 500).json({
+    error: upstream ? 'weather_unavailable' : google ? 'google_unavailable' : 'internal_error',
     message,
   })
 })

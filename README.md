@@ -50,6 +50,28 @@ la localidad real se configura con `PUT /api/settings`).
 
 ![Detalle a 800×480, en apaisado](docs/screenshots/home-800x480.png)
 
+### Fase 3 — agenda: Google Calendar y tareas ✅
+
+Tercer widget, debajo del tiempo: **próximos eventos agrupados por día** (`Hoy`,
+`Mañana`, `jue 16`…) y **tareas pendientes** con su vencimiento (`hoy`, `mañana`,
+`vencida`). Si hay más de los que caben en la pantalla, lo dice (`y 2 eventos más`)
+en vez de cortarlos en silencio.
+
+- **OAuth 2.0 a mano** (`server/src/google/auth.ts`), sin la librería `googleapis`:
+  son cuatro llamadas HTTP. Modelo de *app instalada*, con redirect a loopback.
+- El **refresh_token vive en SQLite** (tabla `google_account`), así que el panel
+  funciona meses sin que nadie vuelva a iniciar sesión: el backend refresca el
+  access_token solo, cuando caduca.
+- Permisos mínimos: `calendar.readonly`, `tasks.readonly` y `userinfo.email`.
+- Si falta configurar o autorizar, el widget **lo dice en pantalla** en vez de
+  quedarse en blanco (`reason` en la respuesta), y el reloj y el tiempo siguen
+  funcionando.
+- Para trabajar en la interfaz sin credenciales hay datos simulados:
+  `DASH_MOCK=1 npm run dev:api`. Nunca se activa solo, y las respuestas lo marcan
+  con `meta.source: "mock"`.
+
+**Conectar tu cuenta** (una sola vez, ver más abajo el paso a paso).
+
 ---
 
 ## Estructura
@@ -61,37 +83,50 @@ Family_dash/
 │   └── sagrada-familia.jpg     # foto de fondo (1920×1280, CC BY-SA 4.0)
 ├── scripts/
 │   ├── kiosk.sh                # lanza Chromium a pantalla completa
-│   └── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
+│   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
+│   ├── google-auth.mjs         # consentimiento de Google (loopback)
+│   └── google-token-copy.mjs   # pasar la autorización de un equipo a otro
 ├── server/
 │   ├── tsconfig.json
 │   └── src/
 │       ├── index.ts            # app Express: API + estáticos + apagado limpio
-│       ├── config.ts           # puerto, ruta de la BD, TTL, localidad por defecto
+│       ├── config.ts           # puerto, ruta de la BD, TTLs, localidad de ejemplo
 │       ├── db.ts               # apertura de SQLite y migraciones
 │       ├── cache.ts            # caché con TTL y respaldo "stale"
 │       ├── settings.ts         # ajustes persistidos (localidad) y su validación
-│       ├── routes/weather.ts   # GET /api/weather
-│       ├── routes/settings.ts  # GET/PUT /api/settings
+│       ├── routes/
+│       │   ├── weather.ts      # GET /api/weather
+│       │   ├── settings.ts     # GET/PUT /api/settings
+│       │   ├── google.ts       # estado y flujo de consentimiento (solo localhost)
+│       │   └── agenda.ts       # GET /api/calendar y /api/tasks
+│       ├── google/
+│       │   ├── auth.ts         # OAuth, token en SQLite y refresco automático
+│       │   ├── api.ts          # GET autenticado contra las APIs de Google
+│       │   ├── calendar.ts     # eventos normalizados
+│       │   ├── tasks.ts        # tareas pendientes de todas las listas
+│       │   └── mock.ts         # datos simulados (solo con DASH_MOCK=1)
 │       └── weather/
 │           ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │           └── wmo.ts          # códigos WMO → texto en español + icono
 └── src/
-    ├── App.tsx                 # compone los dos widgets
-    ├── App.css                 # layout + tarjeta del tiempo
+    ├── App.tsx                 # compone los tres widgets
+    ├── App.css                 # layout + tarjetas del tiempo y la agenda
     ├── index.css               # reset + variables de tema
-    ├── config.ts               # idioma, cadencia de refresco, créditos de la foto
+    ├── config.ts               # idioma, cadencias de refresco, créditos
     ├── components/
     │   ├── Background.tsx      # foto + degradados para legibilidad
     │   ├── ClockWidget.tsx     # widget 1: hora y fecha
     │   ├── WeatherWidget.tsx   # widget 2: el tiempo
+    │   ├── AgendaWidget.tsx    # widget 3: eventos y tareas
     │   ├── WeatherIcon.tsx     # iconos SVG por código WMO
     │   └── PhotoCredit.tsx     # crédito CC BY-SA
     ├── hooks/
     │   ├── useNow.ts           # reloj alineado al segundo
-    │   └── useWeather.ts       # pide /api/weather y se refresca sola
+    │   ├── useWeather.ts       # pide /api/weather y se refresca sola
+    │   └── useAgenda.ts        # pide /api/calendar y /api/tasks
     └── lib/
         ├── api.ts              # cliente HTTP tipado
-        ├── time.ts             # formato de fecha/hora + utilidades
+        ├── time.ts             # formato de fecha/hora + etiquetas de la agenda
         └── types.ts            # tipos de la API
 ```
 
@@ -105,6 +140,16 @@ Family_dash/
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
 | GET | `/api/settings` | Localidad configurada (y la de por defecto) |
 | PUT | `/api/settings` | Cambia la localidad: `{"place":{"name":"Barcelona","latitude":41.3874,"longitude":2.1686,"timezone":"Europe/Madrid"}}` |
+| GET | `/api/calendar` | Próximos eventos agrupables por día (`?days=7`, `?refresh=1`) |
+| GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
+| GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |
+| POST | `/api/google/app` | Guarda `client_id` y `client_secret` — **solo desde localhost** |
+| GET | `/api/google/auth-url` | Devuelve la URL de consentimiento — **solo desde localhost** |
+| POST | `/api/google/exchange` | Canjea el código y guarda el refresh_token — **solo desde localhost** |
+| POST | `/api/google/disconnect` | Revoca el acceso y borra los tokens — **solo desde localhost** |
+
+Los cuatro últimos manejan secretos, así que solo aceptan peticiones desde la
+propia máquina (127.0.0.1/::1): desde la LAN responden `403 local_only`.
 
 La respuesta de `/api/weather` incluye un bloque `meta` que dice si los datos
 vienen de la red o de SQLite (`cached`), si son la última lectura buena porque la
@@ -116,8 +161,13 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
 `data/dashboard.sqlite` (WAL), con migraciones versionadas al arrancar:
 
 - `cache(key, payload, source, fetched_at, expires_at)` — respuestas de APIs con
-  su caducidad. TTL de la meteo: **10 minutos** (`WEATHER_TTL_MS`).
+  su caducidad. TTL: meteo **10 minutos** (`WEATHER_TTL_MS`), calendario y tareas
+  **5 minutos** (`CALENDAR_TTL_MS`, `TASKS_TTL_MS`).
 - `settings(key, value, updated_at)` — por ahora, la localidad del tiempo.
+- `google_app(id=1, client_id, client_secret, updated_at)` — credenciales de la
+  app de Google Cloud (o mejor por entorno: `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`).
+- `google_account(id=1, email, refresh_token, access_token, access_expires_at, scope, …)`
+  — la cuenta autorizada. El refresh_token es lo que mantiene el panel conectado.
 - `schema_migrations(version, name, applied_at)`.
 
 Cambiar la ciudad sin tocar código:
@@ -236,6 +286,48 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 ```
 
+### Conectar la cuenta de Google (una sola vez)
+
+1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto
+   (o usa uno que ya tengas).
+2. En *APIs y servicios → Biblioteca*, habilita **Google Calendar API** y
+   **Google Tasks API**.
+3. En *APIs y servicios → Pantalla de consentimiento OAuth*: tipo **Externo**,
+   ponle un nombre y **añádete como usuario de prueba** (tu propia cuenta).
+4. En *Credenciales → Crear credenciales → ID de cliente de OAuth*, tipo de
+   aplicación **Aplicación de escritorio**. Copia el *client ID* y el *client secret*.
+5. Dale las credenciales al backend y conecta la cuenta:
+
+```bash
+curl -X POST http://127.0.0.1:4173/api/google/app \
+  -H 'content-type: application/json' \
+  -d '{"client_id":"…apps.googleusercontent.com","client_secret":"…"}'
+
+node scripts/google-auth.mjs      # abre el navegador y recoge el código solo
+```
+
+6. Si el consentimiento lo haces en un equipo con teclado (más cómodo que el de la
+   pantalla táctil), copia la autorización a la Pi:
+
+```bash
+node scripts/google-token-copy.mjs export > /tmp/google-auth.json
+scp /tmp/google-auth.json <usuario>@<ip-de-la-pi>:/tmp/
+
+# en la Pi
+node scripts/google-token-copy.mjs import /tmp/google-auth.json
+systemctl --user restart family-dash.service
+rm /tmp/google-auth.json          # contiene el refresh_token: no lo dejes por ahí
+```
+
+Comprobación: `curl -s http://127.0.0.1:4173/api/google/status` debe decir
+`connected: true` con tu email, y `/api/calendar` devolver eventos.
+
+> **Cuidado con el modo *Prueba*.** Mientras la pantalla de consentimiento esté en
+> *Testing*, Google caduca los refresh_token **a los 7 días** y habría que repetir
+> el paso 5 cada semana. Para un panel que vive en la pared, publica la app
+> (*Publicar app* → en producción). Para uso propio no hace falta verificación:
+> verás el aviso de "app no verificada" y podrás continuar.
+
 ### Actualizar el panel
 
 `node_modules` **no** se copia nunca: los binarios nativos del equipo de
@@ -305,7 +397,7 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 |------|-----------|--------|
 | 1 | Pantalla de inicio: hora, fecha y foto | ✅ |
 | 2 | Backend Node + Express + SQLite y dos widgets (reloj / tiempo) | ✅ |
-| 3 | Calendario y tareas de Google | pendiente (necesita OAuth) |
+| 3 | Agenda: Google Calendar y tareas (widget + OAuth propio) | ✅ código hecho; falta conectar tu cuenta |
 | 4 | Noticias RSS | pendiente |
 | 5 | Menú semanal desde el Synology Drive | pendiente |
 | 6 | Navegación táctil entre pantallas | pendiente |

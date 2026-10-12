@@ -10,25 +10,46 @@
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-areas:
+    'clock weather'
+    'clock agenda';
   align-items: center;
-  gap: clamp(0.75rem, 3vmin, 3rem);
+  align-content: center;
+  gap: clamp(0.75rem, 2.6vmin, 2.25rem);
   padding: clamp(0.75rem, 3vmin, 2.75rem);
   overflow: hidden;
   isolation: isolate;
 }
 
+.widget--clock {
+  grid-area: clock;
+}
+
+.widget--weather {
+  grid-area: weather;
+}
+
+.widget--agenda {
+  grid-area: agenda;
+}
+
 @media (orientation: portrait), (max-width: 760px) {
   .screen {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    align-content: center;
-    gap: clamp(1rem, 4.5vmin, 3.5rem);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      'clock'
+      'weather'
+      'agenda';
+    align-content: space-evenly;
+    gap: clamp(0.75rem, 3.5vmin, 2.5rem);
   }
 
   .widget--clock,
-  .widget--weather {
-    width: min(100%, 44rem);
+  .widget--weather,
+  .widget--agenda {
+    width: min(100%, 54rem);
     justify-self: center;
   }
 }
@@ -220,7 +241,8 @@
   letter-spacing: 0.02em;
 }
 
-.weather__refresh {
+.weather__refresh,
+.agenda__refresh {
   flex: none;
   width: clamp(1.9rem, 5vmin, 2.5rem);
   height: clamp(1.9rem, 5vmin, 2.5rem);
@@ -234,7 +256,8 @@
   transition: transform 120ms ease, background 120ms ease;
 }
 
-.weather__refresh:active {
+.weather__refresh:active,
+.agenda__refresh:active {
   transform: scale(0.93);
   background: rgba(255, 255, 255, 0.14);
 }
@@ -383,6 +406,185 @@
   color: #ffd08a;
 }
 
+/* --- widget 3: agenda ---------------------------------------------------- */
+
+.agenda__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.agenda__title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.agenda__actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 1.2vmin, 0.8rem);
+}
+
+.agenda__account {
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.agenda__hint {
+  margin: 0;
+  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
+  color: #ffd08a;
+}
+
+.agenda__empty {
+  margin: 0;
+  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
+  color: var(--ink-faint);
+}
+
+.agenda__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.3rem, 1.1vmin, 0.7rem);
+}
+
+.agenda__day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.agenda__day {
+  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.agenda__events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda__event {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.6vmin, 1rem);
+  padding: clamp(0.16rem, 0.5vmin, 0.3rem) 0;
+}
+
+.agenda__event + .agenda__event {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.agenda__time {
+  flex: none;
+  width: clamp(3.2rem, 9vmin, 5rem);
+  font-size: clamp(0.72rem, 1.9vmin, 1.05rem);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda__what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: clamp(0.8rem, 2.1vmin, 1.2rem);
+}
+
+.agenda__where {
+  font-size: clamp(0.58rem, 1.4vmin, 0.8rem);
+  color: var(--ink-faint);
+}
+
+.agenda__tasks {
+  margin-top: clamp(0.25rem, 0.9vmin, 0.6rem);
+  padding-top: clamp(0.3rem, 1vmin, 0.7rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.agenda__subtitle {
+  margin: 0 0 0.25em;
+  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.agenda__task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.agenda__task {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 1.2vmin, 0.7rem);
+  font-size: clamp(0.76rem, 2vmin, 1.1rem);
+}
+
+.agenda__bullet {
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.agenda__task-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda__due {
+  margin-left: auto;
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.agenda__due[data-late='true'] {
+  color: #ff9f7a;
+}
+
+.agenda__more {
+  margin: 0.15em 0 0;
+  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.agenda__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: clamp(0.53rem, 1.3vmin, 0.75rem);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.agenda__foot--warn .agenda__status {
+  color: #ffd08a;
+}
+
 /* ---------------------------------------------------------------------------
    Vertical (la pantalla de 27" de la Pi, 1080×1920):
    el reloj arriba y la tarjeta del tiempo debajo, con letra y aire de sobra
@@ -392,13 +594,13 @@
 @media (orientation: portrait) {
   .screen {
     align-content: space-evenly;
-    gap: clamp(1.5rem, 5vmin, 5rem);
-    padding: clamp(1.25rem, 4.5vmin, 4rem);
+    gap: clamp(0.6rem, 2.2vmin, 1.8rem);
+    padding: clamp(1rem, 3vmin, 3rem);
   }
 
   .widget--clock {
-    gap: clamp(0.6rem, 2.2vmin, 1.8rem);
-    padding: clamp(1.1rem, 3.2vmin, 2.2rem) clamp(1.4rem, 4vmin, 3rem);
+    gap: clamp(0.5rem, 1.8vmin, 1.4rem);
+    padding: clamp(0.9rem, 2.6vmin, 1.8rem) clamp(1.2rem, 3.4vmin, 2.6rem);
   }
 
   .clock__label,
@@ -407,7 +609,7 @@
   }
 
   .clock__time {
-    font-size: clamp(3.5rem, 22vmin, 14rem);
+    font-size: clamp(3rem, 19vmin, 12rem);
   }
 
   .clock__rule {
@@ -419,7 +621,8 @@
   }
 
   .widget--clock,
-  .widget--weather {
+  .widget--weather,
+  .widget--agenda {
     width: min(100%, 54rem);
   }
 
@@ -429,15 +632,66 @@
     border-radius: clamp(1rem, 3vmin, 2.2rem);
   }
 
-  .widget--clock {
+  .widget--clock,
+  .widget--agenda {
     border-radius: clamp(1rem, 3vmin, 2.2rem);
+  }
+
+  .widget--agenda {
+    gap: clamp(0.7rem, 2.2vmin, 1.6rem);
+    padding: clamp(1.2rem, 3.6vmin, 2.7rem);
+  }
+
+  .agenda__title {
+    font-size: clamp(1.3rem, 3.7vmin, 2.3rem);
+  }
+
+  .agenda__account,
+  .agenda__due {
+    font-size: clamp(0.62rem, 1.6vmin, 0.9rem);
+  }
+
+  .agenda__hint,
+  .agenda__empty {
+    font-size: clamp(0.9rem, 2.4vmin, 1.4rem);
+  }
+
+  .agenda__day,
+  .agenda__subtitle {
+    font-size: clamp(0.68rem, 1.8vmin, 1rem);
+  }
+
+  .agenda__time {
+    width: clamp(3.5rem, 9.5vmin, 5.5rem);
+    font-size: clamp(0.85rem, 2.2vmin, 1.25rem);
+  }
+
+  .agenda__what {
+    font-size: clamp(0.95rem, 2.5vmin, 1.5rem);
+  }
+
+  .agenda__where {
+    font-size: clamp(0.65rem, 1.7vmin, 0.95rem);
+  }
+
+  .agenda__task {
+    font-size: clamp(0.9rem, 2.3vmin, 1.35rem);
+  }
+
+  .agenda__event {
+    padding: clamp(0.25rem, 0.7vmin, 0.45rem) 0;
+  }
+
+  .agenda__foot {
+    font-size: clamp(0.6rem, 1.5vmin, 0.85rem);
   }
 
   .weather__place {
     font-size: clamp(1.3rem, 3.7vmin, 2.3rem);
   }
 
-  .weather__refresh {
+  .weather__refresh,
+  .agenda__refresh {
     width: clamp(2.5rem, 6.4vmin, 3.4rem);
     height: clamp(2.5rem, 6.4vmin, 3.4rem);
   }
@@ -519,10 +773,24 @@
   .weather__day:nth-child(n + 4) {
     display: none;
   }
+
+  /* La agenda se queda en los dos primeros eventos y sin tareas. */
+  .agenda__days {
+    gap: 0;
+  }
+
+  .agenda__event:nth-child(n + 3),
+  .agenda__tasks {
+    display: none;
+  }
 }
 
-@media (max-height: 460px) {
+@media (max-height: 500px) {
   .weather__foot {
+    display: none;
+  }
+
+  .widget--agenda {
     display: none;
   }
 }
@@ -572,11 +840,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .widget--clock,
-  .widget--weather {
+  .widget--weather,
+  .widget--agenda {
     animation: none;
   }
   .clock__colon,
-  .weather__refresh {
+  .weather__refresh,
+  .agenda__refresh {
     transition: none;
   }
 }

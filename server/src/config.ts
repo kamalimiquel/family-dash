@@ -19,6 +19,13 @@ export const DB_PATH =
 /** Cuánto vale una respuesta de Open-Meteo antes de volver a pedirla. */
 export const WEATHER_TTL_MS = Number(process.env.WEATHER_TTL_MS ?? 10 * 60 * 1000)
 
+/** Cuántos días de calendario se piden. */
+export const CALENDAR_DAYS = Number(process.env.CALENDAR_DAYS ?? 7)
+
+/** Caché de calendario y tareas (Google aguanta bien, pero no hace falta ir cada vez). */
+export const CALENDAR_TTL_MS = Number(process.env.CALENDAR_TTL_MS ?? 5 * 60 * 1000)
+export const TASKS_TTL_MS = Number(process.env.TASKS_TTL_MS ?? 5 * 60 * 1000)
+
 export interface Place {
   name: string
   country?: string

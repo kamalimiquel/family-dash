@@ -31,6 +31,33 @@ const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: 'google-oauth',
+    sql: `
+      -- Credenciales del cliente OAuth (una sola app de Google Cloud).
+      CREATE TABLE google_app (
+        id            INTEGER PRIMARY KEY CHECK (id = 1),
+        client_id     TEXT NOT NULL,
+        client_secret TEXT NOT NULL,
+        updated_at    INTEGER NOT NULL
+      );
+
+      -- Cuenta autorizada (una sola). El refresh_token es lo que permite que el
+      -- panel funcione meses sin que nadie vuelva a iniciar sesión.
+      CREATE TABLE google_account (
+        id                INTEGER PRIMARY KEY CHECK (id = 1),
+        email             TEXT,
+        refresh_token     TEXT NOT NULL,
+        access_token      TEXT,
+        access_expires_at INTEGER,
+        scope             TEXT,
+        token_type        TEXT,
+        obtained_at       INTEGER NOT NULL,
+        updated_at        INTEGER NOT NULL
+      );
+    `,
+  },
 ]
 
 /**

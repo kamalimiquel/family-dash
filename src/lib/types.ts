@@ -77,3 +77,63 @@ export interface WeatherSnapshot {
     ttlSeconds: number
   }
 }
+
+/* --- agenda (Google Calendar y Tasks) ------------------------------------ */
+
+export interface GoogleStatus {
+  configured: boolean
+  connected: boolean
+  email: string | null
+  scope: string | null
+  mock: boolean
+}
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  start: string
+  end: string | null
+  allDay: boolean
+  /** `YYYY-MM-DD` del día al que pertenece el evento. */
+  day: string
+  location: string | null
+  calendar: string | null
+}
+
+export interface TaskItem {
+  id: string
+  title: string
+  due: string | null
+  list: string
+  notes: string | null
+}
+
+export interface CacheMeta {
+  source: string
+  cached: boolean
+  stale: boolean
+  fetchedAt: string
+  expiresAt: string
+  ttlSeconds: number
+}
+
+/** Motivo por el que no hay datos (falta configurar o autorizar Google). */
+export interface AgendaReason {
+  error: string
+  message: string
+}
+
+export interface CalendarResponse {
+  events: CalendarEvent[]
+  status: GoogleStatus
+  reason: AgendaReason | null
+  meta: CacheMeta | null
+}
+
+export interface TasksResponse {
+  tasks: TaskItem[]
+  lists: string[]
+  status: GoogleStatus
+  reason: AgendaReason | null
+  meta: CacheMeta | null
+}

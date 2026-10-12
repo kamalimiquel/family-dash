@@ -12,6 +12,12 @@ export const LOCALE = 'es-ES'
 /** Cada cuánto se le vuelve a pedir el tiempo al backend (el backend cachea 10 min). */
 export const WEATHER_REFRESH_MS = 10 * 60 * 1000
 
+/** Cada cuánto se refresca la agenda (el backend cachea 5 min). */
+export const AGENDA_REFRESH_MS = 5 * 60 * 1000
+
+/** Cuántos días de calendario pide el panel. */
+export const AGENDA_DAYS = 7
+
 /** Background photo — La Sagrada Família, Barcelona. */
 export const PHOTO = {
   src: '/sagrada-familia.jpg',
