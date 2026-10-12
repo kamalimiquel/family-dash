@@ -9,17 +9,17 @@ export const APP_NAME = 'Family Dashboard'
 /** UI language used for dates and (later) the rest of the dashboard. */
 export const LOCALE = 'es-ES'
 
-/** Cada cuánto se le vuelve a pedir el tiempo al backend (el backend cachea 10 min). */
-export const WEATHER_REFRESH_MS = 10 * 60 * 1000
+/** Cada cuánto se le vuelve a pedir el tiempo al backend (que cachea 15 min). */
+export const WEATHER_REFRESH_MS = 15 * 60 * 1000
 
-/** Cada cuánto se refresca la agenda (el backend cachea 5 min). */
-export const AGENDA_REFRESH_MS = 5 * 60 * 1000
+/** Cada cuánto se refresca la agenda —calendario y tareas— (cachea 2 min). */
+export const AGENDA_REFRESH_MS = 2 * 60 * 1000
 
 /** Cuántos días de calendario pide el panel. */
 export const AGENDA_DAYS = 7
 
-/** Cada cuánto se le vuelven a pedir los titulares al backend (que cachea 20 min). */
-export const NEWS_REFRESH_MS = 10 * 60 * 1000
+/** Cada cuánto se le vuelven a pedir los titulares al backend (que cachea 15 min). */
+export const NEWS_REFRESH_MS = 15 * 60 * 1000
 
 /** Cada cuánto cambia el titular que enseña cada fuente de la franja de noticias. */
 export const NEWS_ROTATE_MS = 10 * 1000

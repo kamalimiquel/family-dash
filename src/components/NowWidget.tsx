@@ -21,8 +21,11 @@ export function NowWidget({ now, weather }: NowWidgetProps) {
         <span className="now__week">semana {getIsoWeek(now)}</span>
       </header>
 
-      <ClockWidget now={now} />
-      <WeatherWidget state={weather} />
+      {/* La tarjeta es ancha (19 cm): el reloj a la izquierda, el tiempo a la derecha. */}
+      <div className="now__body">
+        <ClockWidget now={now} />
+        <WeatherWidget state={weather} />
+      </div>
     </section>
   )
 }

@@ -11,9 +11,9 @@ export function NewsStrip({ state }: { state: NewsState }) {
   const feeds = state.data?.feeds ?? []
   if (feeds.length === 0) return null
 
-  // La franja se queda en lo que dejan los 19 + 22 + 10 cm (unos 200 px de alto),
-  // así que todas las fuentes van en una fila y la rejilla reparte el ancho.
-  const columns = Math.min(feeds.length, 5)
+  // Con dos fuentes o menos, una columna; con tres o cuatro, dos; con más, tres.
+  // (La franja es alta otra vez, así que dos columnas de titulares grandes.)
+  const columns = feeds.length <= 2 ? feeds.length : feeds.length <= 4 ? 2 : 3
 
   return (
     <ul

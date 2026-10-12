@@ -20,17 +20,17 @@ export const DB_PATH =
 export const DATA_DIR = path.dirname(DB_PATH)
 
 /** Cuánto vale una respuesta de Open-Meteo antes de volver a pedirla. */
-export const WEATHER_TTL_MS = Number(process.env.WEATHER_TTL_MS ?? 10 * 60 * 1000)
+export const WEATHER_TTL_MS = Number(process.env.WEATHER_TTL_MS ?? 15 * 60 * 1000)
 
 /** Cuántos días de calendario se piden. */
 export const CALENDAR_DAYS = Number(process.env.CALENDAR_DAYS ?? 7)
 
 /** Caché de calendario y tareas (Google aguanta bien, pero no hace falta ir cada vez). */
-export const CALENDAR_TTL_MS = Number(process.env.CALENDAR_TTL_MS ?? 5 * 60 * 1000)
-export const TASKS_TTL_MS = Number(process.env.TASKS_TTL_MS ?? 5 * 60 * 1000)
+export const CALENDAR_TTL_MS = Number(process.env.CALENDAR_TTL_MS ?? 2 * 60 * 1000)
+export const TASKS_TTL_MS = Number(process.env.TASKS_TTL_MS ?? 2 * 60 * 1000)
 
 /** Los feeds de noticias cambian, pero no tanto: veinte minutos va sobrado. */
-export const NEWS_TTL_MS = Number(process.env.NEWS_TTL_MS ?? 20 * 60 * 1000)
+export const NEWS_TTL_MS = Number(process.env.NEWS_TTL_MS ?? 15 * 60 * 1000)
 
 /** Titulares que se guardan por fuente (la pantalla enseña uno cada vez). */
 export const NEWS_ITEMS_PER_SOURCE = Number(process.env.NEWS_ITEMS_PER_SOURCE ?? 8)
@@ -69,7 +69,7 @@ export interface PdfSource {
 }
 
 /** Cada cuánto se vuelve a mirar si el PDF ha cambiado. */
-export const PDF_TTL_MS = Number(process.env.PDF_TTL_MS ?? 10 * 60 * 1000)
+export const PDF_TTL_MS = Number(process.env.PDF_TTL_MS ?? 5 * 60 * 1000)
 
 /** Ancho al que se rasterizan las páginas: de sobra para verlas a pantalla completa. */
 export const PDF_RENDER_WIDTH = Number(process.env.PDF_RENDER_WIDTH ?? 1500)

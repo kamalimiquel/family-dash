@@ -102,7 +102,7 @@ vez). Los puntitos dicen por cuál va, de los ocho que guarda de cada feed.
 - **Las fuentes se configuran** con `PUT /api/settings` y viven en la base de datos
   del dispositivo, no en el código: el repositorio no lleva los medios de ninguna
   casa, y cambiar de fuentes no es tocar código.
-- **Una caché por fuente** (20 minutos): si un medio se cae, esa tarjeta lo dice en
+- **Una caché por fuente** (15 minutos): si un medio se cae, esa tarjeta lo dice en
   rojo y las otras cuatro siguen con sus titulares; si ya había titulares guardados,
   enseña los últimos buenos en vez de vaciarse.
 - Los titulares **no son enlaces** a propósito: en el kiosco, un toque dejaría el
@@ -155,13 +155,13 @@ centímetro** (`--cm` en `App.css`).
 
 Las dos tarjetas cuadradas miden su contenido con **unidades de contenedor**
 (`cqw`/`cqh`): el reloj se ve igual de grande a cualquier resolución, porque no
-depende de la pantalla sino de la tarjeta. Con 12 cm de alto, dentro solo cabía lo
-esencial (la hora, la fecha y el tiempo de ahora); **en la fase 8 la tarjeta creció a
-12 × 19 cm y volvieron la previsión y el detalle**. Las medidas de la tabla también se
-revisaron en la fase 8.
+depende de la pantalla sino de la tarjeta. A 12 cm de alto dentro solo cabía lo
+esencial (la hora, la fecha y el tiempo de ahora); **en la fase 8 la tarjeta pasó a ser
+apaisada (19 × 12 cm) y volvieron la previsión y el detalle**. Las medidas de la tabla
+también se revisaron en la fase 8.
 
-En apaisado las medidas físicas no caben (12 + 10 cm se comen los 1080 de alto), así
-que la unidad se encoge y las tarjetas vuelven a medir lo que piden sus contenidos.
+En apaisado las medidas físicas no caben (12 + 22 + 10 cm se comen los 1080 de alto),
+así que la unidad se encoge y las tarjetas vuelven a medir lo que piden sus contenidos.
 
 ### Fase 8 — fondo de vídeo y medidas nuevas ✅
 
@@ -188,19 +188,21 @@ día va justa, lo primero que hay que bajar es el tamaño del vídeo.
 
 El reparto cambia de medidas:
 
-| Zona | Fase 7 | Fase 8 |
-|------|--------|--------|
-| Hora y tiempo | 12 × 12 cm | **12 × 19 cm** |
+| Zona | Fase 7 | Fase 8 (final) |
+|------|--------|----------------|
+| Hora y tiempo | 12 × 12 cm | **19 cm de ancho × 12 de alto** |
 | Tareas | 12 × 12 cm | 12 × 12 cm (pegada arriba) |
 | Agenda | ancho completo, alto del contenido | ancho completo, **22 cm** |
 | Menú (el PDF) | ancho de la agenda × 10 cm | igual |
-| Titulares | lo que queda | lo que queda (unos 200 px, **todos en una fila**) |
+| Titulares | lo que queda | lo que queda (unos 430 px, **dos columnas**) |
 
-Con 19 cm de alto, la tarjeta del tiempo vuelve a enseñar lo que a 12 cm no cabía: el
-detalle (sensación, humedad, viento, lluvia) y la previsión de los próximos días —
-**cuatro días**, porque siete en 12 cm de ancho se pisaban unos a otros. Y la agenda,
-al ser tan alta, reparte sus días por todo el alto para no quedarse medio vacía en una
-semana tranquila.
+La tarjeta de la hora y el tiempo acabó **apaisada** (19 × 12), no alta: el reloj va a la
+izquierda y el tiempo a la derecha. Al ser ancha, el tiempo vuelve a enseñar lo que a
+12 cm no cabía —el detalle (sensación, humedad, viento, lluvia) y la previsión de los
+próximos días—, con **cuatro días** en la franja: siete en esa columna se pisaban unos
+a otros. Y como las dos tarjetas de arriba miden 12 cm de alto, la fila queda a ras y el
+hueco que antes sobraba entre ellas (278 px) se queda en 54. La agenda, al ser tan alta,
+reparte sus días por todo el alto para no quedarse medio vacía en una semana tranquila.
 
 ---
 
@@ -316,9 +318,22 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
 `data/dashboard.sqlite` (WAL), con migraciones versionadas al arrancar:
 
 - `cache(key, payload, source, fetched_at, expires_at)` — respuestas de APIs con
-  su caducidad. TTL: meteo **10 minutos** (`WEATHER_TTL_MS`), calendario y tareas
-  **5 minutos** (`CALENDAR_TTL_MS`, `TASKS_TTL_MS`) y noticias **20 minutos**
-  (`NEWS_TTL_MS`), con una entrada por fuente.
+  su caducidad, con una entrada por fuente de noticias. Las cadencias están en
+  `server/src/config.ts` y el panel las pide a juego desde `src/config.ts`:
+
+  | Dato | Caché en el servidor | Cada cuánto lo pide el panel |
+  |------|----------------------|------------------------------|
+  | Calendario | 2 min (`CALENDAR_TTL_MS`) | 2 min (`AGENDA_REFRESH_MS`) |
+  | Tareas | 2 min (`TASKS_TTL_MS`) | 2 min (el mismo temporizador) |
+  | Tiempo | 15 min (`WEATHER_TTL_MS`) | 15 min (`WEATHER_REFRESH_MS`) |
+  | Noticias | 15 min (`NEWS_TTL_MS`) | 15 min (`NEWS_REFRESH_MS`) |
+  | Menú (PDF) | 5 min (`PDF_TTL_MS`) | 5 min (`PDF_REFRESH_MS`) |
+
+  Las dos columnas van a la par a propósito: si el panel pide cada 15 minutos y la
+  caché dura 2, la mitad de las peticiones no traen nada nuevo; y al revés, el panel
+  enseñaría datos viejos teniendo el backend frescos. También se relee al volver a
+  estar visible o en línea. Los titulares de cada tarjeta **rotan cada 10 s**
+  (`NEWS_ROTATE_MS`), que es cosa aparte del refresco.
 - `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`),
   las fuentes de noticias (`news.sources`) y de dónde sale el PDF (`pdf.source`).
   Las tres cosas viven aquí y no en el código: cada casa pone las suyas.
@@ -350,7 +365,7 @@ curl -X PUT -H 'content-type: application/json' \
   http://localhost:4173/api/settings
 ```
 
-El panel refresca los titulares cada 10 minutos, así que un cambio de fuentes tarda
+El panel refresca los titulares cada 15 minutos, así que un cambio de fuentes tarda
 como mucho eso en verse; reiniciando el kiosco se ve al momento.
 
 Y de dónde sale el PDF (una carpeta —se enseña el más reciente— o un fichero
