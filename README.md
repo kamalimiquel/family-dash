@@ -312,6 +312,25 @@ Si el panel está en **otra máquina** de la casa, el endpoint acepta el aviso c
 (`x-room-token`); desde la propia máquina no hace falta. Sin fichero de token, solo escucha en
 localhost.
 
+**Un robot por ordenador, no por sesión.** Cada ordenador con Hermes tiene el suyo, y su estado es
+el de la **sesión más despierta**: si una máquina tiene tres sesiones abiertas, el robot enseña la
+que está trabajando y solo se va a dormir cuando *todas* han terminado. Lo que permite agregarlas
+es el `sessionId` que manda el hook; sin él, el aviso vale para el robot entero.
+
+Para añadir una máquina nueva (una vez por ordenador):
+
+```bash
+# 1. El mismo hook, con el nombre que tendrá en el cuarto, apuntando al panel.
+mkdir -p ~/.hermes/agent-hooks
+cp room.sh ~/.hermes/agent-hooks/
+python3 ~/.hermes/agent-hooks/instalar-token.py http://<ip-del-panel>:4173/api/agents/state "Nombre de la máquina"
+# 2. El MISMO token que en las demás: copiar el data/agents-token (600) de una a otra.
+# 3. Los tres avisos de arriba y el permiso en shell-hooks-allowlist.json.
+```
+
+El nombre visible puede llevar tildes («Portátil»); el identificador que viaja por la API se
+normaliza solo (`hermes-portatil`), así que dos máquinas nunca chocan.
+
 Y si un agente se queda sin dar señales, el backend lo va bajando solo: de trabajar a esperar y de
 esperar a dormir (5 y 20 minutos). Un estado que no se actualiza nunca acabaría mintiendo.
 
@@ -431,7 +450,7 @@ Family_dash/
 | GET | `/api/locations` | Dónde está la familia que comparte su ubicación (`?refresh=1`) |
 | GET | `/api/agents` | Los agentes de Hermes y en qué estado están (trabajando, esperando, durmiendo) |
 | GET | `/api/agents/events` | Los mismos datos **en directo, por SSE**: al conectar manda el estado completo y después solo los cambios |
-| POST | `/api/agents/state` | Avisa de un cambio: `state` ya masticado (`working`/`waiting`/`sleeping`) o `event` de Hermes, que se traduce aquí — **solo desde localhost**, o con el token del cuarto desde la LAN |
+| POST | `/api/agents/state` | Avisa de un cambio: `state` ya masticado (`working`/`waiting`/`sleeping`) o `event` de Hermes, que se traduce aquí. Con `sessionId` el aviso es de una sesión (se agregan por máquina); sin él, del robot entero — **solo desde localhost**, o con el token del cuarto desde la LAN |
 | GET | `/api/pdf` | Qué PDF hay en la carpeta compartida, con sus páginas y su versión |
 | GET | `/api/pdf/page/:n` | Una página ya rasterizada, en PNG |
 | GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |
