@@ -6,6 +6,7 @@ import { NowWidget } from './components/NowWidget'
 import { PdfWidget } from './components/PdfWidget'
 import { TasksWidget } from './components/TasksWidget'
 import { useAgenda } from './hooks/useAgenda'
+import { useLocations } from './hooks/useLocations'
 import { useNews } from './hooks/useNews'
 import { useNow } from './hooks/useNow'
 import { usePdf } from './hooks/usePdf'
@@ -18,12 +19,13 @@ export default function App() {
   const agenda = useAgenda()
   const news = useNews()
   const pdf = usePdf()
+  const locations = useLocations()
 
   return (
     <main className="screen">
       <Background />
       <NowWidget now={now} weather={weather} />
-      <MapWidget />
+      <MapWidget state={locations} />
       <TasksWidget state={agenda} />
       <CalendarWidget state={agenda} />
       <PdfWidget state={pdf} />

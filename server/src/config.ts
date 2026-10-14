@@ -35,6 +35,9 @@ export const NEWS_TTL_MS = Number(process.env.NEWS_TTL_MS ?? 15 * 60 * 1000)
 /** Titulares que se guardan por fuente (la pantalla enseña uno cada vez). */
 export const NEWS_ITEMS_PER_SOURCE = Number(process.env.NEWS_ITEMS_PER_SOURCE ?? 8)
 
+/** Dónde está la familia: se pregunta a menudo porque cambia de sitio. */
+export const LOCATIONS_TTL_MS = Number(process.env.LOCATIONS_TTL_MS ?? 2 * 60 * 1000)
+
 /** Tope por feed: una web lenta no puede retrasar a las demás. */
 export const NEWS_TIMEOUT_MS = Number(process.env.NEWS_TIMEOUT_MS ?? 10_000)
 

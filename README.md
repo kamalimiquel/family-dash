@@ -204,6 +204,31 @@ a otros. Y como las dos tarjetas de arriba miden 12 cm de alto, la fila queda a 
 hueco que antes sobraba entre ellas (278 px) se queda en 54. La agenda, al ser tan alta,
 reparte sus días por todo el alto para no quedarse medio vacía en una semana tranquila.
 
+### Fase 9 — el mapa de dónde está la familia (a medias, a propósito) ⏳
+
+La tarjeta del mapa va arriba a la derecha (13,2 × 12 cm) y las tareas pasan a una columna
+**en paralelo a la agenda** (12 × 22 cm), donde caben diez de golpe en vez de cuatro.
+
+El mapa se pinta con el **embed de Google sin clave de API**
+(`maps.google.com/maps?q=…&output=embed`): cero configuración y cero facturas… pero solo sabe
+enseñar **un punto por mapa**, así que la tarjeta va rotando entre las personas cada 45 s, con
+su nombre, su dirección y de cuándo es la posición. El iframe lleva `pointer-events: none`:
+el embed trae enlaces a Google Maps y, en un kiosco, un dedo te dejaría fuera del panel.
+
+**Lo que falta es de dónde salen las ubicaciones, y no es un descuido**: Google **no tiene
+API** para leer las ubicaciones compartidas de otros usuarios (es una petición abierta desde
+hace años). Lo único que funciona es reutilizar la sesión del navegador —las cookies
+`__Secure-1PSID` y compañía— contra su servicio interno, que es lo que hacen Home Assistant y
+las librerías tipo [`locationsharinglib`](https://github.com/costastf/locationsharinglib); la
+cookie caduca cada cierto tiempo y hay que renovarla. Las ubicaciones de **Family Link son,
+por debajo, las mismas de Google Maps** (Google lo documenta así al explicar la supervisión
+parental), así que esa vía las cubre todas.
+
+Mientras no haya una fuente decidida y probada contra una cuenta de verdad, la tarjeta dice lo
+que pasa en vez de enseñar un mapa vacío: un mapa sin nadie encima parece una avería y no lo
+es. Con `DASH_MOCK=1` sí trae gente (de mentira) para poder probar el widget entero —embed,
+rotación, cartel— sin credenciales de nadie.
+
 ---
 
 ## Estructura
@@ -270,7 +295,8 @@ Family_dash/
     │   ├── TasksWidget.tsx     # tarjeta 2: tareas pendientes
     │   ├── CalendarWidget.tsx  # tarjeta 3: próximos eventos del calendario
     │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
-    │   ├── NewsStrip.tsx       # tarjeta 5: franja de titulares
+    │   ├── MapWidget.tsx       # tarjeta 5: el mapa, rotando entre las personas
+    │   ├── NewsStrip.tsx       # tarjeta 6: franja de titulares
     │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
     │   └── WeatherIcon.tsx     # iconos SVG por código WMO
     ├── hooks/
@@ -326,6 +352,7 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
   |------|----------------------|------------------------------|
   | Calendario | 2 min (`CALENDAR_TTL_MS`) | 2 min (`AGENDA_REFRESH_MS`) |
   | Tareas | 2 min (`TASKS_TTL_MS`) | 2 min (el mismo temporizador) |
+  | Ubicaciones | 2 min (`LOCATIONS_TTL_MS`) | 2 min (`LOCATIONS_REFRESH_MS`) |
   | Tiempo | 15 min (`WEATHER_TTL_MS`) | 15 min (`WEATHER_REFRESH_MS`) |
   | Noticias | 15 min (`NEWS_TTL_MS`) | 15 min (`NEWS_REFRESH_MS`) |
   | Menú (PDF) | 5 min (`PDF_TTL_MS`) | 5 min (`PDF_REFRESH_MS`) |
@@ -634,7 +661,8 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 | 6 | El menú semanal, en PDF desde la carpeta compartida | ✅ |
 | 7 | Fondo animado y reparto en centímetros | ✅ |
 | 8 | Fondo de vídeo y medidas nuevas | ✅ |
-| 9 | Navegación táctil entre pantallas | pendiente |
+| 9 | Mapa de la familia (falta la fuente de las ubicaciones) | ⏳ |
+| 10 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:
 

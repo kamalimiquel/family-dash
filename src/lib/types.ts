@@ -162,6 +162,27 @@ export interface NewsResponse {
   meta: CacheMeta
 }
 
+/* --- dónde está la familia ---------------------------------------------- */
+
+export interface LocationPerson {
+  name: string
+  address: string | null
+  latitude: number
+  longitude: number
+  /** ISO 8601 de cuándo se supo esa posición. */
+  updatedAt: string
+  accuracy: number | null
+  battery: number | null
+  charging: boolean | null
+}
+
+export interface LocationsResponse {
+  people: LocationPerson[]
+  /** Por qué no hay ubicaciones (falta conectar la fuente de datos). */
+  reason: AgendaReason | null
+  meta: CacheMeta | null
+}
+
 /* --- PDF (el menú que se deja en la carpeta compartida) ------------------ */
 
 export interface PdfDocument {

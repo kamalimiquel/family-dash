@@ -24,6 +24,12 @@ export const NEWS_REFRESH_MS = 15 * 60 * 1000
 /** Cada cuánto cambia el titular que enseña cada fuente de la franja de noticias. */
 export const NEWS_ROTATE_MS = 10 * 1000
 
+/** Cada cuánto se le vuelven a pedir las ubicaciones al backend (cachea 2 min). */
+export const LOCATIONS_REFRESH_MS = 2 * 60 * 1000
+
+/** Cada cuánto pasa el mapa a la siguiente persona que comparte su ubicación. */
+export const LOCATIONS_ROTATE_MS = 45 * 1000
+
 /** Cada cuánto se vuelve a mirar si ha cambiado el PDF de la carpeta compartida. */
 export const PDF_REFRESH_MS = 5 * 60 * 1000
 
