@@ -195,6 +195,8 @@ export interface AgentInfo {
   state: AgentState
   since: string
   detail: string | null
+  /** Sesiones de Hermes que tiene despiertas esa máquina. */
+  sessions: number
 }
 
 export interface AgentsResponse {

@@ -102,6 +102,7 @@ export function createAgentsRouter(db: Db, room: Room): Router {
     const cuerpo = (req.body ?? {}) as {
       agentId?: unknown
       displayName?: unknown
+      sessionId?: unknown
       state?: unknown
       event?: unknown
       detail?: unknown
@@ -132,6 +133,7 @@ export function createAgentsRouter(db: Db, room: Room): Router {
     const agente = room.setState({
       agentId,
       displayName: typeof cuerpo.displayName === 'string' ? cuerpo.displayName : null,
+      sessionId: typeof cuerpo.sessionId === 'string' ? cuerpo.sessionId : null,
       state: estado,
       detail: typeof cuerpo.detail === 'string' ? cuerpo.detail : null,
     })

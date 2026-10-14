@@ -1381,6 +1381,12 @@
   color: var(--ink-faint);
 }
 
+/* Cuántas sesiones tiene despiertas esa máquina (solo si hay más de una). */
+.agents__sesiones {
+  color: var(--ink-faint);
+  opacity: 0.75;
+}
+
 .agents__foot {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding-top: 1cqh;

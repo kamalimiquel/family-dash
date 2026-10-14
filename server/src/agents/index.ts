@@ -6,9 +6,14 @@
  *    cada agente. Nada de posiciones ni de fotogramas: dónde está cada robot, cómo
  *    anda hasta su mesa y qué fotograma enseña lo decide el navegador.
  *  - El estado llega de dos sitios: los **hooks de Hermes** (que avisan en cuanto
- *    pasa algo, vía `POST /api/agents/state`) y un **vigía** que, si un agente se
- *    queda sin noticias, lo pasa a esperando y luego a dormido. Un agente que se
- *    quedó colgado no debe parecer ocupado para siempre.
+ *    pasa algo, vía `POST /api/agents/state`) y un **vigía** que, si una sesión se
+ *    queda sin noticias, la baja de marcha. Un agente que se quedó colgado no debe
+ *    parecer ocupado para siempre.
+ *
+ * **Un robot es una máquina, no una sesión.** Cada máquina tiene su Hermes, y ese
+ * Hermes puede tener varias sesiones abiertas a la vez; el robot enseña la más
+ * despierta (trabajando > esperando > dormido). Un `sessionId` es opcional: sin él,
+ * el aviso vale para el robot entero.
  */
 import type { Db } from '../db.js'
 
@@ -25,12 +30,20 @@ export interface Agent {
   since: string
   /** Detalle libre (la herramienta que está usando, por ejemplo). */
   detail: string | null
+  /** Cuántas sesiones de Hermes tiene despiertas esta máquina. */
+  sessions: number
 }
 
 interface Registro {
   agentId: string
   displayName: string
   color: string
+}
+
+interface Sesion {
+  state: AgentState
+  since: number
+  detail: string | null
 }
 
 interface Guardado {
@@ -50,13 +63,16 @@ const COLORES = [
   '#fdba74', // naranja
 ]
 
-/** Sin noticias en este rato, un agente que trabajaba pasa a esperar. */
+/** Sin noticias en este rato, una sesión que trabajaba pasa a esperar. */
 const SIN_NOTICIAS_MS = 3 * 60 * 1000
 
 /** Y si sigue sin noticias, se echa a dormir. */
 const PARA_DORMIR_MS = 25 * 60 * 1000
 
 const CLAVE_REGISTRO = 'agents.roster'
+
+/** Quién manda cuando una máquina tiene varias sesiones a la vez. */
+const PRIORIDAD: Record<AgentState, number> = { working: 3, waiting: 2, sleeping: 1 }
 
 /** Cómo se cuenta cada evento de Hermes en el cuarto. */
 const POR_EVENTO: Record<string, AgentState> = {
@@ -82,7 +98,10 @@ export function stateForEvent(evento: string): AgentState | null {
 
 export class Room {
   private readonly db: Db
+  /** El estado agregado de cada robot (lo que enseña el cuarto). */
   private readonly estados = new Map<string, Guardado>()
+  /** Y el de cada una de sus sesiones, para poder agregar. */
+  private readonly sesiones = new Map<string, Map<string, Sesion>>()
   private readonly oyentes = new Set<(agente: Agent) => void>()
   private vigia: NodeJS.Timeout | null = null
 
@@ -104,53 +123,43 @@ export class Room {
         state: guardado?.state ?? 'sleeping',
         since: new Date(guardado?.since ?? Date.now()).toISOString(),
         detail: guardado?.detail ?? null,
+        sessions: this.despiertas(ficha.agentId),
       }
     })
   }
 
   /**
-   * Apunta un estado nuevo. Si el agente no estaba en la lista, se le da nombre y
-   * color solos (y se guarda en la base de datos del dispositivo, para que no
-   * cambie de color en cada reinicio).
+   * Apunta un estado nuevo de una sesión (o del robot entero, si no se le pasa
+   * `sessionId`). Si el robot no estaba en la lista, se le da nombre y color solos (y
+   * se guarda en la base de datos del dispositivo, para que no cambie de color en cada
+   * reinicio).
    */
   setState(cambio: {
     agentId: string
     displayName?: string | null
+    sessionId?: string | null
     state: AgentState
     detail?: string | null
   }): Agent {
     const ficha = this.fichaDe(cambio.agentId, cambio.displayName ?? null)
-    const anterior = this.estados.get(cambio.agentId)
 
-    const guardado: Guardado = {
-      agentId: cambio.agentId,
+    let deSesion = this.sesiones.get(cambio.agentId)
+    if (!deSesion) {
+      deSesion = new Map<string, Sesion>()
+      this.sesiones.set(cambio.agentId, deSesion)
+    }
+
+    // Sin sesión identificada, el aviso es del robot entero.
+    const clave = cambio.sessionId ?? '·'
+    const anterior = deSesion.get(clave)
+
+    deSesion.set(clave, {
       state: cambio.state,
       since: anterior && anterior.state === cambio.state ? anterior.since : Date.now(),
       detail: cambio.detail ?? null,
-    }
-    this.estados.set(cambio.agentId, guardado)
+    })
 
-    const agente: Agent = {
-      agentId: ficha.agentId,
-      displayName: ficha.displayName,
-      color: ficha.color,
-      state: guardado.state,
-      since: new Date(guardado.since).toISOString(),
-      detail: guardado.detail,
-    }
-
-    // Solo se avisa si de verdad ha cambiado algo (el navegador no necesita ruido).
-    if (!anterior || anterior.state !== guardado.state || anterior.detail !== guardado.detail) {
-      for (const oyente of this.oyentes) {
-        try {
-          oyente(agente)
-        } catch {
-          /* un oyente roto no puede tumbar a los demás */
-        }
-      }
-    }
-
-    return agente
+    return this.recalcular(cambio.agentId, ficha)
   }
 
   /** Un oyente por cada navegador conectado (los que van por SSE). */
@@ -164,17 +173,86 @@ export class Room {
     return this.oyentes.size
   }
 
-  /** El vigía: sin noticias, un agente baja de marcha en vez de mentir. */
+  /** Sesiones que no están dormidas: las que de verdad cuentan. */
+  private despiertas(agentId: string): number {
+    let cuenta = 0
+    for (const sesion of this.sesiones.get(agentId)?.values() ?? []) {
+      if (sesion.state !== 'sleeping') cuenta += 1
+    }
+    return cuenta
+  }
+
+  /** El robot enseña su sesión más despierta, y avisa si eso ha cambiado. */
+  private recalcular(agentId: string, ficha: Registro): Agent {
+    let estado: AgentState = 'sleeping'
+    let detalle: string | null = null
+
+    for (const sesion of this.sesiones.get(agentId)?.values() ?? []) {
+      if (PRIORIDAD[sesion.state] > PRIORIDAD[estado]) {
+        estado = sesion.state
+        detalle = sesion.detail
+      } else if (sesion.state === estado && !detalle) {
+        detalle = sesion.detail
+      }
+    }
+
+    const anterior = this.estados.get(agentId)
+    const guardado: Guardado = {
+      agentId,
+      state: estado,
+      since: anterior && anterior.state === estado ? anterior.since : Date.now(),
+      detail: detalle,
+    }
+    this.estados.set(agentId, guardado)
+
+    const agente: Agent = {
+      agentId,
+      displayName: ficha.displayName,
+      color: ficha.color,
+      state: guardado.state,
+      since: new Date(guardado.since).toISOString(),
+      detail: guardado.detail,
+      sessions: this.despiertas(agentId),
+    }
+
+    // Solo se avisa si de verdad ha cambiado algo (el navegador no necesita ruido).
+    if (
+      !anterior ||
+      anterior.state !== guardado.state ||
+      anterior.detail !== guardado.detail
+    ) {
+      for (const oyente of this.oyentes) {
+        try {
+          oyente(agente)
+        } catch {
+          /* un oyente roto no puede tumbar a los demás */
+        }
+      }
+    }
+
+    return agente
+  }
+
+  /** El vigía: sin noticias, cada sesión baja de marcha en vez de mentir. */
   private revisar(): void {
     const ahora = Date.now()
-    for (const [agentId, guardado] of this.estados) {
-      const silencio = ahora - guardado.since
 
-      if (guardado.state === 'working' && silencio > SIN_NOTICIAS_MS) {
-        this.setState({ agentId, state: 'waiting', detail: null })
-      } else if (guardado.state === 'waiting' && silencio > PARA_DORMIR_MS) {
-        this.setState({ agentId, state: 'sleeping', detail: null })
+    for (const [agentId, deSesion] of this.sesiones) {
+      let algoCambio = false
+
+      for (const [clave, sesion] of deSesion) {
+        const silencio = ahora - sesion.since
+
+        if (sesion.state === 'working' && silencio > SIN_NOTICIAS_MS) {
+          deSesion.set(clave, { state: 'waiting', since: ahora, detail: null })
+          algoCambio = true
+        } else if (sesion.state === 'waiting' && silencio > PARA_DORMIR_MS) {
+          deSesion.set(clave, { state: 'sleeping', since: ahora, detail: null })
+          algoCambio = true
+        }
       }
+
+      if (algoCambio) this.recalcular(agentId, this.fichaDe(agentId, null))
     }
   }
 

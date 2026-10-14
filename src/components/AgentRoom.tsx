@@ -86,6 +86,9 @@ export function AgentRoom({ state }: { state: AgentsState }) {
             >
               <span className="agents__chip" style={{ background: agente.color }} />
               <span className="agents__name">{agente.displayName}</span>
+              {agente.sessions > 1 && (
+                <span className="agents__sesiones">{agente.sessions} sesiones</span>
+              )}
               <span className="agents__state">{EN_PALABRAS[agente.state]}</span>
             </li>
           ))}
