@@ -246,6 +246,77 @@ cambia su servicio interno, esto dejará de funcionar: es lo que hay cuando no e
 
 ---
 
+### Fase 10 — el cuarto de los agentes ✅
+
+A la derecha del menú hay un cuarto en pixel-art con **un robot amarillo por agente de Hermes**.
+Cada robot lleva su **nombre y su color** (una peana y la etiqueta bajo los pies) para que se sepa
+cuál es cuál, y hay tres sitios donde estar: **tres mesas** (trabajando), la **alfombra** (esperando,
+haciendo malabares) y una **litera de tres pisos** (durmiendo).
+
+**Andar no es un estado, es la transición.** Cuando un agente pasa a trabajar, su robot deja los
+malabares, **anda** hasta su mesa y se pone a teclear. Lo mismo para irse a dormir. En el cuarto no
+se «teletransporta» nadie: se va andando.
+
+**Reparto de responsabilidades** (y esto es lo que hace que en la Pi no se note):
+
+| Quién | De qué se encarga |
+|-------|-------------------|
+| Hermes | Lo que hace de verdad cada agente (herramientas, turnos, sesiones) |
+| Backend | Traducir eso a tres estados y **solo enviar cambios**, por SSE |
+| Navegador | Dónde está cada robot, cómo anda hasta su sitio y qué fotograma enseña |
+
+El backend **no manda cada movimiento**: manda `{"agentId": "hermes-1", "displayName": "Agente 1",
+"state": "working"}` cuando cambia el estado, y ya está. El cuarto vive en un `<canvas>` de 320×180
+pintado a 1:1, con `imageSmoothingEnabled = false` y `image-rendering: pixelated` para que los
+píxeles se vean cuadrados, y su bucle de `requestAnimationFrame` (con tiempo transcurrido, no con
+suposiciones) corre **fuera del ciclo de render de React**: React solo dice qué agentes hay y en qué
+estado están. La escena va como mucho a 30 fps y las animaciones de los sprites entre 2 y 8 fps.
+
+**Si se cae la conexión, se dice.** El cuarto pone *«sin conexión»* y un velo sobre la escena con el
+último estado conocido: un agente del que no se sabe nada **no debe parecer que está durmiendo**.
+
+**El arte se genera aquí**: `scripts/make-agent-art.py` (con Pillow) dibuja el cuarto
+(`public/agents/room.png`), la hoja de sprites (`robot.png`, cuatro animaciones: malabares, andar,
+teclear, dormir) y el mapa de sitios (`robot.json`). Nada se descarga de internet, así que el
+kiosco enseña el cuarto aunque la red esté de vacaciones.
+
+**Conectar el estado de Hermes** (en el ordenador donde corre Hermes, que no tiene por qué ser la
+Pi): los *hooks* de Hermes avisan a este panel con un script. Primero, el token y la URL del panel:
+
+```bash
+# Genera data/agents-token (600, fuera de git) y la config del hook, sin imprimir valores.
+python3 ~/.hermes/agent-hooks/instalar-token.py http://<ip-de-la-pi>:4173/api/agents/state
+```
+
+Y luego tres avisos de Hermes al mismo script (en `~/.hermes/config.yaml`, vía `hermes config set`):
+
+```yaml
+hooks:
+  pre_tool_call:      # el agente se pone a trabajar
+    - command: ~/.hermes/agent-hooks/room.sh
+      timeout: 5
+  on_session_start:   # aparece un agente
+    - command: ~/.hermes/agent-hooks/room.sh
+      timeout: 5
+  on_session_end:     # se va a dormir
+    - command: ~/.hermes/agent-hooks/room.sh
+      timeout: 5
+```
+
+La primera vez Hermes pide permiso para cada par (evento, comando); se puede dar de antemano en
+`~/.hermes/shell-hooks-allowlist.json` (ver `hermes hooks list` y `hermes hooks doctor`). El script
+lee el JSON que Hermes le pasa por stdin, saca el `session_id` y avisa al panel; si el panel no
+está, **se sale en silencio**: un hook no puede estorbar al agente.
+
+Si el panel está en **otra máquina** de la casa, el endpoint acepta el aviso con el token
+(`x-room-token`); desde la propia máquina no hace falta. Sin fichero de token, solo escucha en
+localhost.
+
+Y si un agente se queda sin dar señales, el backend lo va bajando solo: de trabajar a esperar y de
+esperar a dormir (5 y 20 minutos). Un estado que no se actualiza nunca acabaría mintiendo.
+
+---
+
 ## Estructura
 
 ```
@@ -255,12 +326,17 @@ Family_dash/
 │   ├── favicon.svg             # icono
 │   ├── icons.svg               # juego de iconos SVG
 │   ├── fondo.mp4               # vídeo de fondo (720×1280, mudo, en bucle)
-│   └── fondo.jpg               # póster del vídeo (mientras carga)
+│   ├── fondo.jpg               # póster del vídeo (mientras carga)
+│   └── agents/                 # el cuarto: lo genera scripts/make-agent-art.py
+│       ├── room.png            # el cuarto (320×180): mesas, litera y alfombra
+│       ├── robot.png           # hoja de sprites: malabares, andar, teclear, dormir
+│       └── robot.json          # qué fotogramas tiene cada animación y dónde está cada sitio
 ├── scripts/
 │   ├── kiosk.sh                # lanza Chromium a pantalla completa
 │   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
 │   ├── google-auth.mjs         # consentimiento de Google (loopback)
 │   ├── google-token-copy.mjs   # pasar la autorización de un equipo a otro
+│   ├── make-agent-art.py       # dibuja el cuarto y los robots (Pillow, sin internet)
 │   ├── measure-panel.py        # mide las tarjetas por CDP y prueba un toque real
 │   └── export-cookies.py       # saca las cookies de Google del navegador (para el mapa)
 ├── server/
@@ -278,6 +354,7 @@ Family_dash/
 │       │   ├── agenda.ts       # GET /api/calendar y /api/tasks
 │       │   ├── news.ts         # GET /api/news
 │       │   ├── locations.ts    # GET /api/locations (dónde está la familia)
+│       │   ├── agents.ts       # GET /api/agents y /api/agents/events (SSE) + POST de avisos
 │       │   └── pdf.ts          # GET /api/pdf y /api/pdf/page/:n
 │       ├── mock.ts             # isMock(): DASH_MOCK=1, nada más
 │       ├── google/
@@ -289,6 +366,9 @@ Family_dash/
 │       ├── locations/
 │       │   ├── sharing.ts      # lector de las ubicaciones compartidas (cookies)
 │       │   └── mock.ts         # gente de mentira (solo con DASH_MOCK=1)
+│       ├── agents/
+│       │   ├── index.ts        # el estado de cada agente, su ficha y el aviso por SSE
+│       │   └── mock.ts         # agentes de mentira (solo con DASH_MOCK=1)
 │       ├── weather/
 │       │   ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │       │   └── wmo.ts          # códigos WMO → texto en español + icono
@@ -316,7 +396,8 @@ Family_dash/
     │   ├── CalendarWidget.tsx  # tarjeta 3: próximos eventos del calendario
     │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
     │   ├── MapWidget.tsx       # tarjeta 5: el mapa, rotando entre las personas
-    │   ├── NewsStrip.tsx       # tarjeta 6: franja de titulares
+    │   ├── AgentRoom.tsx       # tarjeta 6: el cuarto de los agentes (canvas + leyenda)
+    │   ├── NewsStrip.tsx       # tarjeta 7: franja de titulares
     │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
     │   └── WeatherIcon.tsx     # iconos SVG por código WMO
     ├── hooks/
@@ -324,11 +405,14 @@ Family_dash/
     │   ├── useWeather.ts       # pide /api/weather y se refresca sola
     │   ├── useAgenda.ts        # pide /api/calendar y /api/tasks
     │   ├── useNews.ts          # pide /api/news y se refresca sola
+    │   ├── useAgents.ts        # los agentes por SSE (y si la conexión se ha caído)
     │   └── usePdf.ts           # pide /api/pdf y se refresca sola
     └── lib/
         ├── api.ts              # cliente HTTP tipado
         ├── time.ts             # formato de fecha/hora + etiquetas de la agenda
-        └── types.ts            # tipos de la API
+        ├── types.ts            # tipos de la API
+        └── room/
+            └── engine.ts       # el motor del cuarto: sala, robots, andar y animación
 ```
 
 ---
@@ -345,6 +429,9 @@ Family_dash/
 | GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
 | GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
 | GET | `/api/locations` | Dónde está la familia que comparte su ubicación (`?refresh=1`) |
+| GET | `/api/agents` | Los agentes de Hermes y en qué estado están (trabajando, esperando, durmiendo) |
+| GET | `/api/agents/events` | Los mismos datos **en directo, por SSE**: al conectar manda el estado completo y después solo los cambios |
+| POST | `/api/agents/state` | Avisa de un cambio: `state` ya masticado (`working`/`waiting`/`sleeping`) o `event` de Hermes, que se traduce aquí — **solo desde localhost**, o con el token del cuarto desde la LAN |
 | GET | `/api/pdf` | Qué PDF hay en la carpeta compartida, con sus páginas y su versión |
 | GET | `/api/pdf/page/:n` | Una página ya rasterizada, en PNG |
 | GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |

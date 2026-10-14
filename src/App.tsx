@@ -1,4 +1,5 @@
 import { Background } from './components/Background'
+import { AgentRoom } from './components/AgentRoom'
 import { CalendarWidget } from './components/CalendarWidget'
 import { MapWidget } from './components/MapWidget'
 import { NewsStrip } from './components/NewsStrip'
@@ -6,6 +7,7 @@ import { NowWidget } from './components/NowWidget'
 import { PdfWidget } from './components/PdfWidget'
 import { TasksWidget } from './components/TasksWidget'
 import { useAgenda } from './hooks/useAgenda'
+import { useAgents } from './hooks/useAgents'
 import { useLocations } from './hooks/useLocations'
 import { useNews } from './hooks/useNews'
 import { useNow } from './hooks/useNow'
@@ -20,6 +22,7 @@ export default function App() {
   const news = useNews()
   const pdf = usePdf()
   const locations = useLocations()
+  const agents = useAgents()
 
   return (
     <main className="screen">
@@ -29,6 +32,7 @@ export default function App() {
       <TasksWidget state={agenda} />
       <CalendarWidget state={agenda} />
       <PdfWidget state={pdf} />
+      <AgentRoom state={agents} />
       <NewsStrip state={news} />
     </main>
   )

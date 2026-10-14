@@ -183,6 +183,26 @@ export interface LocationsResponse {
   meta: CacheMeta | null
 }
 
+/* --- los agentes de Hermes (el cuarto) ---------------------------------- */
+
+export type AgentState = 'working' | 'waiting' | 'sleeping'
+
+export interface AgentInfo {
+  agentId: string
+  displayName: string
+  /** Color con el que se le pinta la peana y la etiqueta en el cuarto. */
+  color: string
+  state: AgentState
+  since: string
+  detail: string | null
+}
+
+export interface AgentsResponse {
+  agents: AgentInfo[]
+  /** Cuántos navegadores están escuchando el SSE. */
+  listeners: number
+}
+
 /* --- PDF (el menú que se deja en la carpeta compartida) ------------------ */
 
 export interface PdfDocument {

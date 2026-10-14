@@ -26,7 +26,7 @@
   grid-template-areas:
     'now map map'
     'calendar calendar tasks'
-    'menu menu menu'
+    'menu menu agents'
     'news news news';
   align-content: start;
   gap: clamp(0.5rem, 1.4vmin, 1rem);
@@ -62,6 +62,10 @@
 
 .widget--pdf {
   grid-area: menu;
+}
+
+.widget--agents {
+  grid-area: agents;
 }
 
 /* Tarjeta de cristal: la comparten todas. */
@@ -1262,6 +1266,129 @@
 .map__hint {
   color: var(--ink-faint);
   font-size: 2.2cqw;
+}
+
+/* El cuarto de los agentes, a la derecha del menú. El canvas se enseña a 1:1 (320
+   px de ancho, los mismos que tiene el cuarto) para que el pixel-art no se
+   deforme: con `image-rendering: pixelated` y sin reescalado, cada píxel del dibujo
+   cae en un píxel de la pantalla. */
+.widget--agents {
+  container-type: size;
+  /* Rejilla en vez de flex: con flex, el cuarto (que crece) y el alto sobrante se
+     peleaban y acababa encogido a la mitad. Una fila `1fr` es inequívoca: el cuarto
+     se queda todo lo que sobre. El padding y el gap los pone la tarjeta base. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  overflow: hidden;
+}
+
+.agents__head,
+.agents__list,
+.agents__foot {
+  min-height: 0;
+}
+
+/* Ojo con las unidades de contenedor: `cqw`/`cqh` dentro de la propia tarjeta NO
+   resuelven contra ella (un contenedor no se consulta a sí mismo), sino contra la
+   pantalla. Por eso el gap va en rem: con el gap de la tarjeta base (23 px × 3) más
+   el padding, al cuarto no le quedaban los 180 px que necesita el canvas. */
+.widget.widget--agents {
+  gap: 0.6rem;
+}
+
+.agents__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.agents__title {
+  margin: 0;
+  font-size: 3.4cqw;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.agents__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--ink-faint);
+  font-size: 2.2cqw;
+}
+
+/* El puntito de la conexión: verde si el SSE está vivo, rojo si se ha caído. */
+.agents__link::before {
+  content: '';
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: #f87171;
+}
+
+.agents__link--on::before {
+  background: #4ade80;
+}
+
+.agents__room {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 0.7rem;
+  overflow: hidden;
+  background: rgba(8, 10, 24, 0.5);
+}
+
+/* El canvas va posicionado, no en el flujo: si estuviera en el flujo, su propio
+   tamaño (320x180) influiría en el alto de la caja y los dos se encogían el uno al
+   otro hasta dejar el cuarto en la mitad. Así la caja la manda el flex y el canvas
+   se coloca dentro manteniendo su proporción. */
+.agents__canvas {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.agents__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 0.9em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agents__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--ink-soft);
+  font-size: 2.1cqw;
+}
+
+.agents__chip {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 2px;
+}
+
+.agents__state {
+  color: var(--ink-faint);
+}
+
+.agents__foot {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 1cqh;
+}
+
+.agents__hint {
+  color: var(--ink-faint);
+  font-size: 1.9cqw;
 }
 
 /* La agenda mide 22 cm de alto. Con cuatro eventos se queda medio vacía, así que
