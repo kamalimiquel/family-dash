@@ -31,8 +31,9 @@ except ImportError:  # pragma: no cover
 # la pantalla es de 27" con 1080x1920, o sea 32,12 px por centímetro.
 TARJETAS = [
     ("hora y tiempo", ".widget--now"),
-    ("tareas", ".widget--tasks"),
+    ("mapa", ".widget--map"),
     ("agenda", ".widget--calendar"),
+    ("tareas", ".widget--tasks"),
     ("menu", ".widget--pdf"),
     ("titulares", ".news-strip"),
 ]

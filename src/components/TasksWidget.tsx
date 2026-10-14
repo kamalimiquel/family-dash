@@ -2,7 +2,7 @@ import type { AgendaState } from '../hooks/useAgenda'
 import { formatDueLabel, formatTimeShort } from '../lib/time'
 
 /** Cuántas tareas se enseñan de golpe; el resto va contado en el pie. */
-const MAX_TASKS = 4
+const MAX_TASKS = 10
 
 /** Motivos de "todavía no hay datos" explicados para la familia. */
 const REASON_TEXT: Record<string, string> = {

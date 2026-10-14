@@ -1,5 +1,6 @@
 import { Background } from './components/Background'
 import { CalendarWidget } from './components/CalendarWidget'
+import { MapWidget } from './components/MapWidget'
 import { NewsStrip } from './components/NewsStrip'
 import { NowWidget } from './components/NowWidget'
 import { PdfWidget } from './components/PdfWidget'
@@ -22,6 +23,7 @@ export default function App() {
     <main className="screen">
       <Background />
       <NowWidget now={now} weather={weather} />
+      <MapWidget />
       <TasksWidget state={agenda} />
       <CalendarWidget state={agenda} />
       <PdfWidget state={pdf} />

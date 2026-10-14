@@ -24,8 +24,8 @@
   grid-template-columns: var(--cm19) minmax(0, 1fr) var(--cm12);
   grid-template-rows: var(--cm12) var(--cm22) var(--cm10) minmax(0, 1fr);
   grid-template-areas:
-    'now . tasks'
-    'calendar calendar calendar'
+    'now map map'
+    'calendar calendar tasks'
     'menu menu menu'
     'news news news';
   align-content: start;
@@ -50,6 +50,10 @@
 
 .widget--calendar {
   grid-area: calendar;
+}
+
+.widget--map {
+  grid-area: map;
 }
 
 .widget--tasks {
@@ -1142,6 +1146,49 @@
   display: none;
 }
 
+/* El mapa, arriba a la derecha (13 × 12 cm: lo que sobra de la fila después de
+   los 19 cm de la hora y el tiempo). */
+.widget--map {
+  container-type: size;
+  gap: 2cqh;
+  padding: 4cqw;
+  overflow: hidden;
+}
+
+.map__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.map__title {
+  margin: 0;
+  font-size: 3.6cqw;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.map__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 3cqw;
+}
+
+.map__foot {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 1.4cqh;
+}
+
+.map__hint {
+  color: var(--ink-faint);
+  font-size: 2.4cqw;
+}
+
 /* La agenda mide 22 cm de alto. Con cuatro eventos se queda medio vacía, así que
    los días se reparten el alto a partes iguales (con una semana llena se aprietan
    solos, sin desbordar) y la letra sube otro poco para llenar la tarjeta. */
@@ -1191,14 +1238,12 @@
   font-size: 1.75cqw;
 }
 
-/* Las tareas, también cuadradas (12×12 cm) y pegadas arriba: la fila es más
-   alta que ellas, porque la tarjeta de al lado mide 19 cm. */
+/* Las tareas van en la columna de 12 cm, en paralelo a la agenda: ocupan todo el
+   alto de la fila (22 cm), así que caben muchas más que antes. */
 .widget--tasks {
   container-type: size;
-  align-self: start;
-  height: var(--cm12);
-  gap: 3cqw;
-  padding: 6cqw;
+  gap: 2.4cqw;
+  padding: 4cqw;
   overflow: hidden;
 }
 
