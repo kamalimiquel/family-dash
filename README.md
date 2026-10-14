@@ -204,30 +204,45 @@ a otros. Y como las dos tarjetas de arriba miden 12 cm de alto, la fila queda a 
 hueco que antes sobraba entre ellas (278 px) se queda en 54. La agenda, al ser tan alta,
 reparte sus días por todo el alto para no quedarse medio vacía en una semana tranquila.
 
-### Fase 9 — el mapa de dónde está la familia (a medias, a propósito) ⏳
+### Fase 9 — el mapa de dónde está la familia ✅ (con letra pequeña)
 
 La tarjeta del mapa va arriba a la derecha (13,2 × 12 cm) y las tareas pasan a una columna
 **en paralelo a la agenda** (12 × 22 cm), donde caben diez de golpe en vez de cuatro.
 
 El mapa se pinta con el **embed de Google sin clave de API**
 (`maps.google.com/maps?q=…&output=embed`): cero configuración y cero facturas… pero solo sabe
-enseñar **un punto por mapa**, así que la tarjeta va rotando entre las personas cada 45 s, con
-su nombre, su dirección y de cuándo es la posición. El iframe lleva `pointer-events: none`:
-el embed trae enlaces a Google Maps y, en un kiosco, un dedo te dejaría fuera del panel.
+enseñar **un punto por mapa**, así que la tarjeta va rotando entre las personas cada 45 s, con su
+nombre, su dirección y de cuándo es la posición. El iframe lleva `pointer-events: none`: el embed
+trae enlaces a Google Maps y, en un kiosco, un dedo te dejaría fuera del panel.
 
-**Lo que falta es de dónde salen las ubicaciones, y no es un descuido**: Google **no tiene
-API** para leer las ubicaciones compartidas de otros usuarios (es una petición abierta desde
-hace años). Lo único que funciona es reutilizar la sesión del navegador —las cookies
-`__Secure-1PSID` y compañía— contra su servicio interno, que es lo que hacen Home Assistant y
-las librerías tipo [`locationsharinglib`](https://github.com/costastf/locationsharinglib); la
-cookie caduca cada cierto tiempo y hay que renovarla. Las ubicaciones de **Family Link son,
-por debajo, las mismas de Google Maps** (Google lo documenta así al explicar la supervisión
-parental), así que esa vía las cubre todas.
+**De dónde salen las ubicaciones**: de reutilizar la sesión del navegador. Google **no tiene API**
+para leer las ubicaciones compartidas de otros usuarios (es una petición abierta desde hace años);
+lo único que funciona es pedírselas a su servicio interno con las cookies de una sesión iniciada,
+que es lo que hacen Home Assistant y [`locationsharinglib`](https://github.com/costastf/locationsharinglib)
+—de ahí salen la petición (`GET /maps/rpc/locationsharing/read`) y el mapeo de campos de
+`server/src/locations/sharing.ts`—. Las ubicaciones de **Family Link son, por debajo, las mismas de
+Google Maps** (Google lo documenta así al explicar la supervisión parental), así que esta vía las
+cubre todas.
 
-Mientras no haya una fuente decidida y probada contra una cuenta de verdad, la tarjeta dice lo
-que pasa en vez de enseñar un mapa vacío: un mapa sin nadie encima parece una avería y no lo
-es. Con `DASH_MOCK=1` sí trae gente (de mentira) para poder probar el widget entero —embed,
-rotación, cartel— sin credenciales de nadie.
+Ponerlo en marcha (una vez por máquina):
+
+```bash
+# 1. Exportar las cookies del navegador donde tengas la sesión de Google.
+#    El script se las pide al propio Chromium por CDP (ya descifradas) y NUNCA
+#    imprime sus valores: las deja en ~/.config/family-dash/ con permisos 600.
+python3 export-cookies.py
+# 2. Copiarlas al dispositivo, al lado de su base de datos, con permisos 600 del
+#    usuario del panel (solo se lee; no hace falta nada más).
+install -m 600 google-cookies.txt <ruta-del-proyecto>/data/google-cookies.txt
+```
+
+Se puede cambiar de sitio con `LOCATIONS_COOKIES=/ruta/al/fichero`.
+
+**La letra pequeña, que conviene no olvidar**: ese fichero da acceso a la cuenta de Google (de ahí
+los 600, que viva en `data/` —que no viaja en el despliegue ni al repositorio— y que no se suba a
+ningún sitio), y **caduca**. Cuando caduque, la tarjeta lo dice tal cual —*«La sesión de Google
+caducó: hay que renovar las cookies»*— y se arregla repitiendo los dos pasos. Y si algún día Google
+cambia su servicio interno, esto dejará de funcionar: es lo que hay cuando no existe API.
 
 ---
 
@@ -246,7 +261,8 @@ Family_dash/
 │   ├── restart-kiosk.sh        # reinicia el kiosco (tras desplegar, por ejemplo)
 │   ├── google-auth.mjs         # consentimiento de Google (loopback)
 │   ├── google-token-copy.mjs   # pasar la autorización de un equipo a otro
-│   └── measure-panel.py        # mide las tarjetas por CDP y prueba un toque real
+│   ├── measure-panel.py        # mide las tarjetas por CDP y prueba un toque real
+│   └── export-cookies.py       # saca las cookies de Google del navegador (para el mapa)
 ├── server/
 │   ├── tsconfig.json
 │   └── src/
@@ -261,6 +277,7 @@ Family_dash/
 │       │   ├── google.ts       # estado y flujo de consentimiento (solo localhost)
 │       │   ├── agenda.ts       # GET /api/calendar y /api/tasks
 │       │   ├── news.ts         # GET /api/news
+│       │   ├── locations.ts    # GET /api/locations (dónde está la familia)
 │       │   └── pdf.ts          # GET /api/pdf y /api/pdf/page/:n
 │       ├── mock.ts             # isMock(): DASH_MOCK=1, nada más
 │       ├── google/
@@ -269,6 +286,9 @@ Family_dash/
 │       │   ├── calendar.ts     # eventos normalizados
 │       │   ├── tasks.ts        # tareas pendientes de todas las listas
 │       │   └── mock.ts         # datos simulados (solo con DASH_MOCK=1)
+│       ├── locations/
+│       │   ├── sharing.ts      # lector de las ubicaciones compartidas (cookies)
+│       │   └── mock.ts         # gente de mentira (solo con DASH_MOCK=1)
 │       ├── weather/
 │       │   ├── openMeteo.ts    # cliente de Open-Meteo y normalización
 │       │   └── wmo.ts          # códigos WMO → texto en español + icono
@@ -324,6 +344,7 @@ Family_dash/
 | GET | `/api/calendar` | Próximos eventos agrupables por día (`?days=7`, `?refresh=1`) |
 | GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
 | GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
+| GET | `/api/locations` | Dónde está la familia que comparte su ubicación (`?refresh=1`) |
 | GET | `/api/pdf` | Qué PDF hay en la carpeta compartida, con sus páginas y su versión |
 | GET | `/api/pdf/page/:n` | Una página ya rasterizada, en PNG |
 | GET | `/api/google/status` | Si falta configurar o autorizar, y con qué cuenta |
@@ -661,7 +682,7 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 | 6 | El menú semanal, en PDF desde la carpeta compartida | ✅ |
 | 7 | Fondo animado y reparto en centímetros | ✅ |
 | 8 | Fondo de vídeo y medidas nuevas | ✅ |
-| 9 | Mapa de la familia (falta la fuente de las ubicaciones) | ⏳ |
+| 9 | Mapa de la familia (con las cookies de Google Maps) | ✅ |
 | 10 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:

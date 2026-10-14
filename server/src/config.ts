@@ -38,6 +38,13 @@ export const NEWS_ITEMS_PER_SOURCE = Number(process.env.NEWS_ITEMS_PER_SOURCE ??
 /** Dónde está la familia: se pregunta a menudo porque cambia de sitio. */
 export const LOCATIONS_TTL_MS = Number(process.env.LOCATIONS_TTL_MS ?? 2 * 60 * 1000)
 
+/**
+ * Fichero de cookies de Google (formato Netscape) para leer las ubicaciones
+ * compartidas. Vive en `data/`, que no viaja en el despliegue ni al repositorio.
+ */
+export const LOCATIONS_COOKIES =
+  process.env.LOCATIONS_COOKIES ?? path.join(DATA_DIR, 'google-cookies.txt')
+
 /** Tope por feed: una web lenta no puede retrasar a las demás. */
 export const NEWS_TIMEOUT_MS = Number(process.env.NEWS_TIMEOUT_MS ?? 10_000)
 

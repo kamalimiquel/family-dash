@@ -1,8 +1,11 @@
+import { readFile } from 'node:fs/promises'
+import type { CacheResult } from '../cache.js'
 import { getOrFetch } from '../cache.js'
-import { LOCATIONS_TTL_MS } from '../config.js'
+import { LOCATIONS_COOKIES, LOCATIONS_TTL_MS } from '../config.js'
 import type { Db } from '../db.js'
 import { isMock } from '../mock.js'
 import { mockPeople } from './mock.js'
+import { SharingError, cookieHeader, fetchSharedLocations } from './sharing.js'
 
 /** Una persona que comparte su ubicación con la cuenta del panel. */
 export interface LocationPerson {
@@ -61,31 +64,61 @@ export async function getLocations(
   db: Db,
   options: { refresh?: boolean } = {},
 ): Promise<LocationsSnapshot> {
-  if (!isMock()) {
+  if (options.refresh) db.prepare('DELETE FROM cache WHERE key = ?').run(CACHE_KEY)
+
+  if (isMock()) {
+    const cache = await getOrFetch(db, CACHE_KEY, LOCATIONS_TTL_MS, async () => mockPeople(), 'mock')
+    return { people: cache.value, reason: null, meta: metaOf(cache, 'mock') }
+  }
+
+  // El lector de verdad: la sesión del navegador (el fichero de cookies) contra el
+  // servicio interno de Google. El porqué, en `sharing.ts`.
+  let contenido: string
+  try {
+    contenido = await readFile(LOCATIONS_COOKIES, 'utf8')
+  } catch {
     return {
       people: [],
-      reason: {
-        error: 'sin_conectar',
-        message: 'Google no da API para leer las ubicaciones compartidas',
-      },
+      reason: { error: 'sin_cookies', message: 'Faltan las cookies de Google Maps' },
       meta: null,
     }
   }
 
-  if (options.refresh) db.prepare('DELETE FROM cache WHERE key = ?').run(CACHE_KEY)
+  try {
+    const cabecera = cookieHeader(contenido)
+    const cache = await getOrFetch(
+      db,
+      CACHE_KEY,
+      LOCATIONS_TTL_MS,
+      () => fetchSharedLocations(cabecera),
+      'google-locationsharing',
+    )
+    return { people: cache.value, reason: null, meta: metaOf(cache, 'google-locationsharing') }
+  } catch (error) {
+    const caducada = error instanceof SharingError && error.kind === 'sesion'
+    return {
+      people: [],
+      reason: {
+        error: caducada ? 'sesion_caducada' : 'error',
+        message: caducada
+          ? 'La sesión de Google caducó: hay que renovar las cookies'
+          : error instanceof SharingError
+            ? error.message
+            : 'No se han podido leer las ubicaciones compartidas',
+      },
+      meta: null,
+    }
+  }
+}
 
-  const cache = await getOrFetch(db, CACHE_KEY, LOCATIONS_TTL_MS, async () => mockPeople(), 'mock')
-
+/** El `meta` que espera el panel, a partir de lo que devolvió la caché. */
+function metaOf(cache: CacheResult<LocationPerson[]>, source: string): LocationsSnapshot['meta'] {
   return {
-    people: cache.value,
-    reason: null,
-    meta: {
-      source: 'mock',
-      cached: cache.cached,
-      stale: cache.stale,
-      fetchedAt: new Date(cache.fetchedAt).toISOString(),
-      expiresAt: new Date(cache.expiresAt).toISOString(),
-      ttlSeconds: Math.round((cache.expiresAt - cache.fetchedAt) / 1000),
-    },
+    source,
+    cached: cache.cached,
+    stale: cache.stale,
+    fetchedAt: new Date(cache.fetchedAt).toISOString(),
+    expiresAt: new Date(cache.expiresAt).toISOString(),
+    ttlSeconds: Math.round((cache.expiresAt - cache.fetchedAt) / 1000),
   }
 }
