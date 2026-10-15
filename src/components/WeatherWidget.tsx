@@ -42,8 +42,8 @@ export function WeatherWidget({ state }: { state: WeatherState }) {
 
   return (
     <div className="weather" aria-label={`Tiempo en ${placeName}`}>
-      <header className="weather__head">
-        <h2 className="weather__place">{placeName}</h2>
+      <header className="weather__head card-head">
+        <h2 className="weather__place card-title">{placeName}</h2>
         <button
           type="button"
           className="weather__refresh"

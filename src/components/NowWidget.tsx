@@ -64,7 +64,7 @@ export function NowWidget({ now, weather }: NowWidgetProps) {
         }
       }}
     >
-      <header className="now__head">
+      <header className="now__head card-head">
         <span className="now__label">Hoy</span>
         <span className="now__week">
           {abierto ? 'radar · toca fuera para cerrar' : `semana ${getIsoWeek(now)}`}

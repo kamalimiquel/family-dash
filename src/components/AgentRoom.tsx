@@ -59,8 +59,8 @@ export function AgentRoom({ state }: { state: AgentsState }) {
 
   return (
     <section className="widget widget--agents" aria-label="Los agentes de Hermes">
-      <header className="agents__head">
-        <h2 className="agents__title">Agentes</h2>
+      <header className="agents__head card-head">
+        <h2 className="agents__title card-title">Agentes</h2>
         <span className={`agents__link${sinConexion ? '' : ' agents__link--on'}`}>
           {sinConexion ? 'sin conexión' : 'en directo'}
         </span>
@@ -95,7 +95,7 @@ export function AgentRoom({ state }: { state: AgentsState }) {
         </ul>
       )}
 
-      <footer className="agents__foot">
+      <footer className="agents__foot card-foot">
         <span className="agents__hint">
           {state.agents.length === 0
             ? 'Ningún agente ha dado señales todavía'

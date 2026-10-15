@@ -130,9 +130,9 @@ export function MapWidget({ state }: { state: LocationsState }) {
 
   return (
     <section className="widget widget--map" aria-label="Dónde está la familia">
-      <header className="map__head">
-        <h2 className="map__title">Dónde están</h2>
-        {home && <span className="map__count">{home.label}</span>}
+      <header className="map__head card-head">
+        <h2 className="map__title card-title">Dónde están</h2>
+        {home && <span className="map__count card-meta">{home.label}</span>}
       </header>
 
       {people.length > 0 ? (

@@ -69,8 +69,8 @@ export function PdfWidget({ state }: { state: PdfState }) {
           }
         }}
       >
-        <header className="pdf__head">
-          <h2 className="pdf__title">Menú</h2>
+        <header className="pdf__head card-head">
+          <h2 className="pdf__title card-title">Menú</h2>
           <span className="pdf__file">{document_ ? document_.file : '—'}</span>
         </header>
 
@@ -90,7 +90,7 @@ export function PdfWidget({ state }: { state: PdfState }) {
             </div>
           </div>
         ) : (
-          <p className="pdf__empty">{hint ?? 'sin PDF'}</p>
+          <p className="pdf__empty card-empty">{hint ?? 'sin PDF'}</p>
         )}
       </div>
 

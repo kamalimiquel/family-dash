@@ -49,11 +49,11 @@ export function CalendarWidget({ state }: { state: AgendaState }) {
 
   return (
     <section className="widget widget--calendar" aria-label="Agenda familiar">
-      <header className="calendar__head">
-        <h2 className="calendar__title">Agenda</h2>
+      <header className="calendar__head card-head">
+        <h2 className="calendar__title card-title">Agenda</h2>
         <div className="calendar__actions">
           {status?.email && (
-            <span className="calendar__account" title={status.email}>
+            <span className="calendar__account card-meta" title={status.email}>
               {status.email.split('@')[0]}
             </span>
           )}
@@ -70,7 +70,7 @@ export function CalendarWidget({ state }: { state: AgendaState }) {
         </div>
       </header>
 
-      {hint && <p className="calendar__hint">{hint}</p>}
+      {hint && <p className="calendar__hint card-hint">{hint}</p>}
 
       {groups.length > 0 && (
         <ul className="calendar__days">
@@ -93,13 +93,13 @@ export function CalendarWidget({ state }: { state: AgendaState }) {
         </ul>
       )}
 
-      {groups.length === 0 && !hint && <p className="calendar__empty">Nada apuntado estos días</p>}
+      {groups.length === 0 && !hint && <p className="calendar__empty card-empty">Nada apuntado estos días</p>}
 
       {hidden > 0 && (
-        <p className="calendar__more">y {hidden} evento{hidden === 1 ? '' : 's'} más</p>
+        <p className="calendar__more card-more">y {hidden} evento{hidden === 1 ? '' : 's'} más</p>
       )}
 
-      <footer className={`calendar__foot${stale ? ' calendar__foot--warn' : ''}`}>
+      <footer className={`calendar__foot card-foot${stale ? ' card-foot--warn' : ''}`}>
         <span className="calendar__status">
           {receivedAt ? `actualizado a las ${formatTimeShort(receivedAt)}` : '—'}
         </span>

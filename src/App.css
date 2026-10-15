@@ -10,16 +10,53 @@
 --------------------------------------------------------------------------- */
 
 :root {
-  --cm: 32.12px;
+  /* --- medidas del panel ----------------------------------------------------
+     La pantalla de la Pi son 27" con 1080x1920: 81,6 px/pulgada, o sea 32,12 px por
+     centímetro. Las tres filas fijas suman 46 cm (12 + 22 + 12), así que el centímetro
+     se recorta solo cuando la pantalla es más baja —en un portátil de 800 px de alto
+     salen ~16 px/cm, y en uno de 600, ~11,5— y así nunca aparece scroll vertical ni
+     se queda contenido cortado. El hueco y el margen son los mismos en todas partes. */
+  --page: 20px;
+  --gap: 16px;
+  --cm: min(32.12px, calc((100vh - var(--page) * 2 - var(--gap) * 3 - 4px) / 53));
+  --cm5: calc(5 * var(--cm));
+  --cm9: calc(9 * var(--cm));
+  --cm10: calc(10 * var(--cm));
   --cm12: calc(12 * var(--cm));
+  --cm14: calc(14 * var(--cm));
   --cm15: calc(1.5 * var(--cm));
   --cm19: calc(19 * var(--cm));
   --cm22: calc(22 * var(--cm));
-  --cm9: calc(9 * var(--cm));
-  --cm10: calc(10 * var(--cm));
-  /* El hueco de la rejilla, que también necesitan las cosas que se colocan a caballo
-     entre dos filas (el pulsador del kiosco). */
-  --gap: clamp(0.5rem, 1.4vmin, 1rem);
+
+  /* --- espaciado: múltiplos de 4 ------------------------------------------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* --- tarjeta: una sola piel para todas ----------------------------------- */
+  --card-radius: 16px;
+  --card-pad: var(--sp-5);
+  --card-gap: var(--sp-3);
+  --card-border: rgba(255, 255, 255, 0.14);
+  --card-surface: linear-gradient(158deg, rgba(17, 19, 40, 0.58), rgba(10, 12, 26, 0.42));
+  --card-shadow: 0 18px 44px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --line: rgba(255, 255, 255, 0.08);
+
+  /* --- jerarquía de letra: tamaños físicos, iguales en todas las tarjetas --- */
+  --t-title: clamp(1.05rem, 2.6vmin, 1.7rem);
+  --t-lead: clamp(0.8rem, 2vmin, 1.15rem);
+  --t-body: clamp(0.72rem, 1.8vmin, 1.02rem);
+  --t-meta: clamp(0.55rem, 1.4vmin, 0.8rem);
+  --t-foot: clamp(0.53rem, 1.3vmin, 0.75rem);
+
+  /* --- color de aviso, siempre el mismo ------------------------------------ */
+  --warn: #ffd08a;
+  --danger: #ff9f7a;
+  --ok: #4ade80;
 }
 
 .screen {
@@ -27,7 +64,17 @@
   inset: 0;
   display: grid;
   grid-template-columns: var(--cm19) minmax(0, 1fr) var(--cm12);
-  grid-template-rows: var(--cm12) var(--cm22) var(--cm10) minmax(0, 1fr);
+  /* La fila de planificación (agenda y tareas) no mide siempre lo mismo: va de 14 a
+     22 cm según lo que haya que enseñar. Con pocos eventos se queda corta y los
+     titulares ganan el hueco (nunca menos de 5 cm); con la semana llena se planta en
+     el tope y los eventos
+     se deslizan dentro de su tarjeta. Las otras dos filas son fijas: la de arriba
+     porque el reloj y el mapa no cambian de tamaño, y la del menú porque el cuarto
+     de los agentes necesita sus 180 px de alto y la vista del PDF se agradece
+     grande. Las tres fijas a tope suman 46 cm, y a eso se le reservan otros 7 para
+     la franja de titulares: de ahí el 53 de la fórmula. Sin esa reserva, en un
+     portátil la fila de titulares se quedaba en 4 px (medido). */
+  grid-template-rows: var(--cm12) minmax(var(--cm14), var(--cm22)) var(--cm12) minmax(var(--cm5), 1fr);
   grid-template-areas:
     'now map map'
     'calendar calendar tasks'
@@ -35,19 +82,15 @@
     'news news news';
   align-content: start;
   gap: var(--gap);
-  padding: clamp(0.5rem, 1.4vmin, 1rem);
+  padding: var(--page);
   overflow: hidden;
   isolation: isolate;
 }
 
-/* En apaisado no cabe a tamaño real (12 + 10 cm se comen los 1080 de alto): la
-   unidad se encoge. Los tamaños de tarjeta se sueltan más abajo, al final del
-   fichero, porque si no ganan las reglas de vertical por orden de aparición. */
-@media (orientation: landscape) {
-  :root {
-    --cm: 15px;
-  }
-}
+/* Ya no hace falta un apaño para apaisado: el centímetro se recorta solo (ver
+   `:root`), así que el reparto es el mismo giro la pantalla y no hay dos juegos de
+   números que se puedan desincronizar. Los tamaños sueltos por orientación siguen
+   al final del fichero. */
 
 .widget--now {
   grid-area: now;
@@ -129,15 +172,114 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.5rem, 1.7vmin, 1.1rem);
-  padding: clamp(0.85rem, 2.6vmin, 1.9rem);
-  border-radius: clamp(0.9rem, 2.4vmin, 1.6rem);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(155deg, rgba(16, 18, 38, 0.6), rgba(10, 12, 28, 0.38));
+  gap: var(--card-gap);
+  padding: var(--card-pad);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--card-border);
+  background: var(--card-surface);
   backdrop-filter: blur(16px) saturate(1.25);
   -webkit-backdrop-filter: blur(16px) saturate(1.25);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--card-shadow);
   animation: widget-in 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* --- piezas que se repiten en todas las tarjetas ---------------------------
+   Cabecera, título, cuerpo y pie. Cada widget las lleva además de las suyas, así
+   que el encabezado de la agenda, el de las tareas y el del menú son literalmente
+   la misma regla: no pueden separarse por descuido ni cambiar de tamaño a medias.
+   Lo que sí cambia por tarjeta es lo de dentro (el tiempo de la hora y la fecha se
+   mide contra su tarjeta, por ejemplo), y eso se queda en su sitio. */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: 0;
+}
+
+.card-title {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--t-title);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-meta {
+  flex: none;
+  font-size: var(--t-meta);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.card-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  font-size: var(--t-foot);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.card-foot--warn .card-status {
+  color: var(--warn);
+}
+
+.card-empty {
+  margin: 0;
+  font-size: var(--t-body);
+  color: var(--ink-faint);
+}
+
+.card-hint {
+  margin: 0;
+  font-size: var(--t-lead);
+  color: var(--warn);
+}
+
+.card-more {
+  margin: 0.15em 0 0;
+  font-size: var(--t-meta);
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+/* Botones redondos: el mismo tamaño en todas partes, y nunca menos de 44 px, que
+   es lo que mide un dedo cómodo en una pantalla táctil. */
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(2.4rem, 6vmin, 3.4rem);
+  height: clamp(2.4rem, 6vmin, 3.4rem);
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-soft);
+  transition: background 160ms ease, color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--ink);
+}
+
+.icon-btn svg {
+  width: 46%;
+  height: 46%;
 }
 
 /* --- fondo: degradado violeta/azul, manchas en movimiento y olas ---------- */
@@ -296,12 +438,9 @@
 
 /* Cabecera de la tarjeta, con la misma estructura que la del tiempo:
    etiqueta a la izquierda, pastilla a la derecha. */
+/* La maquetación la pone `.card-head`; esto es lo único suyo. */
 .now__head {
   align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .now__label {
@@ -416,18 +555,16 @@
 }
 
 /* El tiempo abre sección dentro de la tarjeta: línea y aire arriba. */
+/* El tiempo abre sección dentro de la tarjeta: línea y aire arriba. Lo demás lo
+   pone `.card-head`. */
 .weather__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: clamp(0.5rem, 1.7vmin, 1.1rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
 }
 
 .weather__place {
   margin: 0;
-  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
+  font-size: var(--t-title);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -594,68 +731,19 @@
 }
 
 .weather__foot--warn .weather__status {
-  color: #ffd08a;
+  color: var(--warn);
 }
 
-.tasks__more {
-  margin: 0.15em 0 0;
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.03em;
-  color: var(--ink-faint);
-}
-
-.tasks__foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  font-size: clamp(0.53rem, 1.3vmin, 0.75rem);
-  letter-spacing: 0.03em;
-  color: var(--ink-faint);
-}
-
-.tasks__foot--warn .tasks__status {
-  color: #ffd08a;
+.card-foot--warn .tasks__status {
+  color: var(--warn);
 }
 
 /* --- widget 3: agenda ---------------------------------------------------- */
-
-.calendar__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.calendar__title {
-  margin: 0;
-  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
 
 .calendar__actions {
   display: flex;
   align-items: center;
   gap: clamp(0.4rem, 1.2vmin, 0.8rem);
-}
-
-.calendar__account {
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-
-.calendar__hint {
-  margin: 0;
-  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
-  color: #ffd08a;
-}
-
-.calendar__empty {
-  margin: 0;
-  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
-  color: var(--ink-faint);
 }
 
 .calendar__days {
@@ -667,14 +755,19 @@
   gap: clamp(0.3rem, 1.1vmin, 0.7rem);
 }
 
+/* Cada día crece para repartirse el alto de la tarjeta, pero nunca por debajo de su
+   contenido (`flex-basis: auto`): con pocos eventos los grupos se reparten el hueco
+   en vez de dejarlo todo abajo, y con la semana llena se quedan a su tamaño y es la
+   lista la que desliza. */
 .calendar__day-group {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  flex: 1 1 auto;
+  gap: var(--sp-1);
 }
 
 .calendar__day {
-  font-size: clamp(0.58rem, 1.5vmin, 0.85rem);
+  font-size: var(--t-meta);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--accent);
@@ -691,18 +784,18 @@
 .calendar__event {
   display: flex;
   align-items: baseline;
-  gap: clamp(0.5rem, 1.6vmin, 1rem);
-  padding: clamp(0.16rem, 0.5vmin, 0.3rem) 0;
+  gap: var(--sp-4);
+  padding: var(--sp-1) 0;
 }
 
 .calendar__event + .calendar__event {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--line);
 }
 
 .calendar__time {
   flex: none;
   width: clamp(3.2rem, 9vmin, 5rem);
-  font-size: clamp(0.72rem, 1.9vmin, 1.05rem);
+  font-size: var(--t-body);
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
@@ -711,48 +804,15 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  font-size: clamp(0.8rem, 2.1vmin, 1.2rem);
+  font-size: var(--t-lead);
 }
 
 .calendar__where {
-  font-size: clamp(0.58rem, 1.4vmin, 0.8rem);
+  font-size: var(--t-meta);
   color: var(--ink-faint);
 }
 
 /* --- widget 4: tareas pendientes ----------------------------------------- */
-
-.tasks__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.tasks__heading {
-  margin: 0;
-  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.tasks__count {
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-faint);
-}
-
-.tasks__hint {
-  margin: 0;
-  font-size: clamp(0.7rem, 1.8vmin, 1.05rem);
-  color: #ffd08a;
-}
-
-.tasks__empty {
-  margin: 0;
-  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
-  color: var(--ink-faint);
-}
 
 .tasks__list {
   list-style: none;
@@ -760,14 +820,24 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: var(--sp-2);
+}
+
+/* Mismo trato que la agenda: la tarjeta no se estira para llenar el hueco (la fila
+   se adapta a lo que hay) y, si la lista crece más que su tarjeta, se desliza. */
+.widget--tasks .tasks__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .tasks__item {
   display: flex;
   align-items: center;
-  gap: clamp(0.4rem, 1.2vmin, 0.7rem);
-  font-size: clamp(0.76rem, 2vmin, 1.1rem);
+  gap: var(--sp-3);
+  font-size: var(--t-body);
 }
 
 .tasks__bullet {
@@ -788,34 +858,17 @@
 
 .tasks__due {
   margin-left: auto;
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  font-size: var(--t-meta);
   letter-spacing: 0.04em;
   color: var(--ink-faint);
 }
 
 .tasks__due[data-late='true'] {
-  color: #ff9f7a;
+  color: var(--danger);
 }
 
-.calendar__more {
-  margin: 0.15em 0 0;
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
-  letter-spacing: 0.03em;
-  color: var(--ink-faint);
-}
-
-.calendar__foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  font-size: clamp(0.53rem, 1.3vmin, 0.75rem);
-  letter-spacing: 0.03em;
-  color: var(--ink-faint);
-}
-
-.calendar__foot--warn .calendar__status {
-  color: #ffd08a;
+.card-foot--warn .calendar__status {
+  color: var(--warn);
 }
 
 /* --- widget 4: el PDF de la carpeta compartida --------------------------- */
@@ -831,41 +884,34 @@
   cursor: default;
 }
 
-.pdf__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.pdf__title {
-  margin: 0;
-  font-size: clamp(1.05rem, 2.9vmin, 1.75rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
 .pdf__file {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  font-size: var(--t-meta);
   color: var(--ink-faint);
 }
 
+/* La miniatura se lleva todo el alto que le deje la tarjeta en vez de un tamaño
+   fijo: es lo que se mira, y así la vista previa se lee de verdad. El texto, a su
+   lado y centrado con ella. */
 .pdf__body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
-  gap: clamp(0.6rem, 2vmin, 1.4rem);
-  min-height: 0;
+  gap: var(--sp-5);
 }
 
 .pdf__thumb {
   flex: none;
-  height: clamp(3.4rem, 9.5vmin, 8rem);
+  height: 100%;
   width: auto;
-  border-radius: 0.3rem;
+  max-width: 55%;
+  object-fit: contain;
+  object-position: left center;
+  border-radius: var(--sp-1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: #fff;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
@@ -874,24 +920,24 @@
 .pdf__info {
   display: flex;
   flex-direction: column;
-  gap: 0.2em;
+  gap: var(--sp-2);
   min-width: 0;
 }
 
 .pdf__hint {
-  font-size: clamp(0.8rem, 2.1vmin, 1.3rem);
+  font-size: var(--t-lead);
   color: var(--ink-soft);
 }
 
 .pdf__meta {
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  font-size: var(--t-meta);
   letter-spacing: 0.04em;
   color: var(--ink-faint);
 }
 
 .pdf__empty {
-  margin: 0;
-  font-size: clamp(0.75rem, 1.9vmin, 1.05rem);
+  margin: auto;
+  font-size: var(--t-body);
   color: var(--ink-faint);
 }
 
@@ -1007,22 +1053,25 @@
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(0.4rem, 1.4vmin, 1rem);
+  gap: var(--gap);
 }
 
+/* Tres filas fijas —fuente, titular y puntos— para que todas las tarjetas tengan la
+   misma estructura: los titulares empiezan a la misma altura y los puntos quedan
+   abajo, alineados entre sí, mida lo que mida cada titular. */
 .news {
   position: relative;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.25rem, 0.8vmin, 0.5rem);
-  padding: clamp(0.5rem, 1.5vmin, 0.95rem);
-  border-radius: clamp(0.6rem, 1.6vmin, 1.1rem);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(155deg, rgba(12, 18, 30, 0.6), rgba(9, 13, 22, 0.4));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--card-border);
+  background: linear-gradient(158deg, rgba(17, 19, 40, 0.52), rgba(10, 12, 26, 0.38));
   backdrop-filter: blur(14px) saturate(1.2);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--card-shadow);
 }
 
 .news__source {
@@ -1036,7 +1085,6 @@
 }
 
 .news__title {
-  flex: 1;
   min-height: 0;
   font-size: clamp(0.72rem, 1.9vmin, 1.08rem);
   line-height: 1.28;
@@ -1055,7 +1103,7 @@
 }
 
 .news[data-error='true'] .news__source {
-  color: #ff9f7a;
+  color: var(--danger);
 }
 
 .news__dots {
@@ -1303,7 +1351,7 @@
 
 .radar__aviso {
   inset: 1cqh auto auto 1.1cqh;
-  color: #ffd08a;
+  color: var(--warn);
 }
 
 /* El mapa, arriba a la derecha (13 × 12 cm: lo que sobra de la fila después de
@@ -1312,28 +1360,7 @@
    encuadrados para que quepan (el *embed* de Google solo marca un punto). */
 .widget--map {
   container-type: size;
-  gap: 1.6cqh;
-  padding: 3cqw;
   overflow: hidden;
-}
-
-.map__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.map__title {
-  margin: 0;
-  font-size: 3.4cqw;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.map__count {
-  color: var(--ink-faint);
-  font-size: 2.4cqw;
 }
 
 .map__frame {
@@ -1460,7 +1487,7 @@
 
 /* Mismo ámbar que el resto de pies cuando el dato viene de la caché. */
 .map__foot--warn .map__hint {
-  color: #ffd08a;
+  color: var(--warn);
 }
 
 /* El cuarto de los agentes, a la derecha del menú. El canvas se enseña a 1:1 (320
@@ -1483,24 +1510,17 @@
   min-height: 0;
 }
 
-/* Ojo con las unidades de contenedor: `cqw`/`cqh` dentro de la propia tarjeta NO
-   resuelven contra ella (un contenedor no se consulta a sí mismo), sino contra la
-   pantalla. Por eso el gap va en rem: con el gap de la tarjeta base (23 px × 3) más
-   el padding, al cuarto no le quedaban los 180 px que necesita el canvas. */
+/* El cuarto necesita 180 px de alto para el canvas (320x180 a 1:1, sin reescalar:
+   eso es lo que mantiene nítido el pixel-art) y el aire que sobra se lo queda la caja
+   del canvas, que lo centra. Con la fila a 12 cm entran de sobra el canvas, la
+   cabecera, la lista y el pie. */
 .widget.widget--agents {
-  gap: 0.6rem;
-}
-
-.agents__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: var(--sp-3);
 }
 
 .agents__title {
   margin: 0;
-  font-size: 3.4cqw;
+  font-size: var(--t-title);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -1510,7 +1530,7 @@
   align-items: center;
   gap: 0.4em;
   color: var(--ink-faint);
-  font-size: 2.2cqw;
+  font-size: var(--t-meta);
 }
 
 /* El puntito de la conexión: verde si el SSE está vivo, rojo si se ha caído. */
@@ -1530,7 +1550,7 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  border-radius: 0.7rem;
+  border-radius: var(--sp-3);
   overflow: hidden;
   background: rgba(8, 10, 24, 0.5);
 }
@@ -1543,8 +1563,14 @@
   position: absolute;
   inset: 0;
   margin: auto;
+  width: auto;
+  height: auto;
   max-width: 100%;
   max-height: 100%;
+  /* Si no cabe a tamaño natural se encoge, pero siempre con su 16:9: deformado se ve
+     peor que pequeño. A tamaño natural sigue dando 320x180 exactos, que es lo que
+     mantiene el pixel-art nítido. */
+  aspect-ratio: 16 / 9;
   image-rendering: pixelated;
   touch-action: none;
 }
@@ -1563,7 +1589,7 @@
   align-items: center;
   gap: 0.4em;
   color: var(--ink-soft);
-  font-size: 2.1cqw;
+  font-size: var(--t-meta);
 }
 
 .agents__chip {
@@ -1583,29 +1609,36 @@
 }
 
 .agents__foot {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1cqh;
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-2);
 }
 
 .agents__hint {
   color: var(--ink-faint);
-  font-size: 1.9cqw;
+  font-size: var(--t-foot);
 }
 
-/* La agenda mide 22 cm de alto. Con cuatro eventos se queda medio vacía, así que
-   los días se reparten el alto a partes iguales (con una semana llena se aprietan
-   solos, sin desbordar) y la letra sube otro poco para llenar la tarjeta. */
+/* La agenda lleva la fila de planificación, y esa fila se adapta a lo que haya que
+   enseñar (de 14 a 22 cm, ver `.screen`): con pocos días la tarjeta se queda corta y
+   los titulares ganan el hueco; con la semana llena se planta en el tope y los
+   eventos se deslizan dentro, sin empujar a nadie.
+   `inline-size` y no `size`: la tarjeta TIENE que poder medir lo que mide su
+   contenido, o no habría forma de que la fila se adaptara (con contención de tamaño,
+   su alto no depende de lo de dentro y se quedaría siempre en el mínimo). La letra
+   sigue midiéndose contra la tarjeta: `cqw` funciona igual. */
 .widget--calendar {
-  container-type: size;
+  container-type: inline-size;
+  overflow: hidden;
 }
 
 .widget--calendar .calendar__days {
   flex: 1;
-  justify-content: space-around;
-}
-
-.widget--calendar .calendar__title {
-  font-size: 4.4cqw;
+  min-height: 0;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .widget--calendar .calendar__account,
@@ -1645,13 +1678,7 @@
    alto de la fila (22 cm), así que caben muchas más que antes. */
 .widget--tasks {
   container-type: size;
-  gap: 2.4cqw;
-  padding: 4cqw;
   overflow: hidden;
-}
-
-.widget--tasks .tasks__heading {
-  font-size: 9cqw;
 }
 
 .widget--tasks .tasks__count {
@@ -1673,17 +1700,17 @@
   font-size: 4.4cqw;
 }
 
-/* El menú: el ancho del calendario y 10 cm de alto. */
+/* El menú: el ancho de la agenda y el alto de su fila (12 cm). Sin alto propio: si
+   se lo diéramos, se quedaría corto dentro de la fila y las dos tarjetas de al lado
+   no medirían lo mismo, que es justo lo que no debe pasar. */
 .widget--pdf {
   container-type: size;
-  height: var(--cm10);
-  gap: 2.5cqw;
-  padding: 3.4cqw 4cqw;
   overflow: hidden;
 }
 
+/* El título lo pone `.card-title`, como en todas: mismo tamaño en las seis. */
 .pdf__title {
-  font-size: 3.6cqw;
+  min-width: 0;
 }
 
 .pdf__file {
@@ -1734,6 +1761,23 @@
 @media (max-width: 900px) {
   .weather__details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Pantallas bajas: el cuarto se queda con lo esencial. El canvas baja a la mitad
+   exacta (160x90, 2:1, así el pixel-art sigue cuadrando) y la lista y la pista se
+   van: en una tarjeta de 154 px de alto no caben el canvas a tamaño natural, la
+   cabecera, la lista y el pie, y lo que no se puede es enseñar el cuarto a medias.
+   El estado sigue en la cabecera, con su punto de conexión. */
+@media (max-height: 900px) {
+  .widget--agents {
+    padding: var(--sp-3);
+    gap: var(--sp-2);
+  }
+
+  .agents__list,
+  .agents__foot {
+    display: none;
   }
 }
 
@@ -1810,6 +1854,19 @@
   }
 }
 
+/* En apaisado los centímetros no caben, así que las columnas van a proporción. Los
+   números salen de pedir dos cosas a la vez: la fila de arriba 55/45 (el tiempo
+   contra el mapa) y las de abajo 60/40 (agenda contra tareas y menú contra agentes).
+   Con tres columnas —arriba el tiempo ocupa la primera y el mapa las otras dos;
+   abajo la agenda las dos primeras y su pareja la última— el reparto que cumple las
+   dos es 1,375 : 0,125 : 1 (en 1880 px de ancho: 1034 + 94 = 1128 para la agenda y
+   752 para las tareas, o sea 60/40; y el tiempo 1034 contra 846 de mapa, 55/45). */
+@media (orientation: landscape) {
+  .screen {
+    grid-template-columns: 1.375fr 0.125fr 1fr;
+  }
+}
+
 /* En apaisado los titulares van todos en una fila. */
 @media (orientation: landscape) {
   .news-strip {
@@ -1827,6 +1884,15 @@
     height: auto;
     overflow: visible;
   }
+}
+
+/* La piel de los titulares, al final a propósito: arriba hay reglas por tamaño de
+   pantalla que la dejaban un par de píxeles distinta de las demás tarjetas, y aquí
+   se remata. (Misma especificidad, gana la última: la trampa de siempre en este
+   fichero.) */
+.news {
+  padding: var(--card-pad);
+  border-radius: var(--card-radius);
 }
 
 /* --- animaciones --------------------------------------------------------- */

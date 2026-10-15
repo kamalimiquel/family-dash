@@ -37,14 +37,14 @@ export function TasksWidget({ state }: { state: AgendaState }) {
 
   return (
     <section className="widget widget--tasks" aria-label="Tareas pendientes">
-      <header className="tasks__head">
-        <h2 className="tasks__heading">Tareas</h2>
+      <header className="tasks__head card-head">
+        <h2 className="tasks__heading card-title">Tareas</h2>
         {tasks.length > 0 && (
-          <span className="tasks__count">{plural(tasks.length, 'pendiente', 'pendientes')}</span>
+          <span className="tasks__count card-meta">{plural(tasks.length, 'pendiente', 'pendientes')}</span>
         )}
       </header>
 
-      {hint && <p className="tasks__hint">{hint}</p>}
+      {hint && <p className="tasks__hint card-hint">{hint}</p>}
 
       {visible.length > 0 && (
         <ul className="tasks__list">
@@ -65,13 +65,13 @@ export function TasksWidget({ state }: { state: AgendaState }) {
         </ul>
       )}
 
-      {visible.length === 0 && !hint && <p className="tasks__empty">Nada pendiente</p>}
+      {visible.length === 0 && !hint && <p className="tasks__empty card-empty">Nada pendiente</p>}
 
       {hidden > 0 && (
-        <p className="tasks__more">y {plural(hidden, 'tarea más', 'tareas más')}</p>
+        <p className="tasks__more card-more">y {plural(hidden, 'tarea más', 'tareas más')}</p>
       )}
 
-      <footer className={`tasks__foot${stale ? ' tasks__foot--warn' : ''}`}>
+      <footer className={`tasks__foot card-foot${stale ? ' card-foot--warn' : ''}`}>
         <span className="tasks__status">
           {receivedAt ? `actualizado a las ${formatTimeShort(receivedAt)}` : '—'}
         </span>
