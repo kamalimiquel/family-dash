@@ -8,6 +8,7 @@ import { googleStatus } from './google/auth.js'
 import { createAgendaRouter } from './routes/agenda.js'
 import { createAgentsRouter } from './routes/agents.js'
 import { createGoogleRouter } from './routes/google.js'
+import { createKioskRouter } from './routes/kiosk.js'
 import { createLocationsRouter } from './routes/locations.js'
 import { createNewsRouter } from './routes/news.js'
 import { createPdfRouter } from './routes/pdf.js'
@@ -43,6 +44,7 @@ app.use('/api', createNewsRouter(db))
 app.use('/api', createLocationsRouter(db))
 app.use('/api', createAgentsRouter(db, room))
 app.use('/api', createPdfRouter(db))
+app.use('/api', createKioskRouter())
 
 // Cualquier otra ruta /api: 404 en JSON, no HTML.
 app.use('/api', (_req, res) => {

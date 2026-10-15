@@ -12,10 +12,14 @@
 :root {
   --cm: 32.12px;
   --cm12: calc(12 * var(--cm));
+  --cm15: calc(1.5 * var(--cm));
   --cm19: calc(19 * var(--cm));
   --cm22: calc(22 * var(--cm));
   --cm9: calc(9 * var(--cm));
   --cm10: calc(10 * var(--cm));
+  /* El hueco de la rejilla, que también necesitan las cosas que se colocan a caballo
+     entre dos filas (el pulsador del kiosco). */
+  --gap: clamp(0.5rem, 1.4vmin, 1rem);
 }
 
 .screen {
@@ -30,7 +34,7 @@
     'menu menu agents'
     'news news news';
   align-content: start;
-  gap: clamp(0.5rem, 1.4vmin, 1rem);
+  gap: var(--gap);
   padding: clamp(0.5rem, 1.4vmin, 1rem);
   overflow: hidden;
   isolation: isolate;
@@ -67,6 +71,56 @@
 
 .widget--agents {
   grid-area: agents;
+}
+
+/* --- pulsador para salir del modo quiosco --------------------------------- */
+
+/* 1,5 cm de diámetro, en la derecha, justo entre la esquina inferior derecha del
+   cuarto de los agentes y los titulares. En vez de calcular la altura a mano, se
+   coloca en la rejilla —fila de los titulares, columna de la derecha— y se sube
+   medio hueco: así cae en el hueco mida lo que mida el resto, también en apaisado. */
+.kiosk-exit {
+  grid-area: 4 / 3 / 5 / 4;
+  justify-self: end;
+  align-self: start;
+  z-index: 3;
+  width: var(--cm15);
+  height: var(--cm15);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(96, 102, 118, 0.34);
+  backdrop-filter: blur(7px) saturate(1.2);
+  -webkit-backdrop-filter: blur(7px) saturate(1.2);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transform: translateY(calc(-50% - var(--gap) / 2));
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kiosk-exit svg {
+  width: 60%;
+  height: 60%;
+}
+
+.kiosk-exit:active,
+.kiosk-exit[disabled] {
+  background: rgba(150, 156, 172, 0.46);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.kiosk-exit:active {
+  transform: translateY(calc(-50% - var(--gap) / 2)) scale(0.93);
+}
+
+.kiosk-exit[disabled] {
+  cursor: default;
 }
 
 /* Tarjeta de cristal: la comparten todas. */

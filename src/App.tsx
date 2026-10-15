@@ -1,6 +1,7 @@
 import { Background } from './components/Background'
 import { AgentRoom } from './components/AgentRoom'
 import { CalendarWidget } from './components/CalendarWidget'
+import { KioskExitButton } from './components/KioskExitButton'
 import { MapWidget } from './components/MapWidget'
 import { NewsStrip } from './components/NewsStrip'
 import { NowWidget } from './components/NowWidget'
@@ -34,6 +35,7 @@ export default function App() {
       <PdfWidget state={pdf} />
       <AgentRoom state={agents} />
       <NewsStrip state={news} />
+      <KioskExitButton />
     </main>
   )
 }
