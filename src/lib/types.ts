@@ -180,8 +180,17 @@ export interface LocationPerson {
   charging: boolean | null
 }
 
+/** Dónde está casa: el punto de referencia del mapa (ajuste del dispositivo). */
+export interface HomePlace {
+  label: string
+  latitude: number
+  longitude: number
+}
+
 export interface LocationsResponse {
   people: LocationPerson[]
+  /** Dónde está casa, si está configurada; el mapa encuadra casa + gente. */
+  home: HomePlace | null
   /** Por qué no hay ubicaciones (falta conectar la fuente de datos). */
   reason: AgendaReason | null
   meta: CacheMeta | null

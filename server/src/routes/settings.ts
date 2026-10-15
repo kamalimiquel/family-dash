@@ -2,13 +2,14 @@ import { Router } from 'express'
 import type { Db } from '../db.js'
 import {
   DEFAULT_AGENDA_TARGET,
+  DEFAULT_HOME,
   DEFAULT_NEWS_SOURCES,
   DEFAULT_PDF_SOURCE,
   DEFAULT_PLACE,
 } from '../config.js'
 import { getNewsSources, setNewsSources } from '../news/sources.js'
 import { getPdfSource, setPdfSource } from '../pdf/source.js'
-import { getPlace, setPlace } from '../settings.js'
+import { getHome, getPlace, setHome, setPlace } from '../settings.js'
 import { getAgendaTarget, setAgendaTarget } from '../google/target.js'
 
 /**
@@ -26,18 +27,20 @@ export function createSettingsRouter(db: Db): Router {
       news: getNewsSources(db),
       pdf: getPdfSource(db),
       agenda: getAgendaTarget(db),
+      home: getHome(db),
       defaults: {
         place: DEFAULT_PLACE,
         news: DEFAULT_NEWS_SOURCES,
         pdf: DEFAULT_PDF_SOURCE,
         agenda: DEFAULT_AGENDA_TARGET,
+        home: DEFAULT_HOME,
       },
     })
   })
 
   router.put('/settings', (req, res) => {
     const body = req.body as
-      | { place?: unknown; news?: unknown; pdf?: unknown; agenda?: unknown }
+      | { place?: unknown; news?: unknown; pdf?: unknown; agenda?: unknown; home?: unknown }
       | undefined
 
     if (
@@ -45,17 +48,25 @@ export function createSettingsRouter(db: Db): Router {
       (body.place === undefined &&
         body.news === undefined &&
         body.pdf === undefined &&
-        body.agenda === undefined)
+        body.agenda === undefined &&
+        body.home === undefined)
     ) {
-      res.status(400).json({ error: 'bad_request', message: 'Falta place, news, pdf o agenda' })
+      res.status(400).json({ error: 'bad_request', message: 'Falta place, news, pdf, agenda o home' })
       return
     }
 
     try {
-      const answer: { place?: unknown; news?: unknown; pdf?: unknown; agenda?: unknown } = {}
+      const answer: {
+        place?: unknown
+        news?: unknown
+        pdf?: unknown
+        agenda?: unknown
+        home?: unknown
+      } = {}
       if (body.news !== undefined) answer.news = setNewsSources(db, body.news)
       if (body.pdf !== undefined) answer.pdf = setPdfSource(db, body.pdf)
       if (body.agenda !== undefined) answer.agenda = setAgendaTarget(db, body.agenda)
+      if (body.home !== undefined) answer.home = setHome(db, body.home)
       if (body.place !== undefined) answer.place = setPlace(db, body.place as never)
       res.json(answer)
     } catch (error) {

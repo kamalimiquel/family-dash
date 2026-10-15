@@ -209,11 +209,27 @@ reparte sus días por todo el alto para no quedarse medio vacía en una semana t
 La tarjeta del mapa va arriba a la derecha (13,2 × 12 cm) y las tareas pasan a una columna
 **en paralelo a la agenda** (12 × 22 cm), donde caben diez de golpe en vez de cuatro.
 
-El mapa se pinta con el **embed de Google sin clave de API**
-(`maps.google.com/maps?q=…&output=embed`): cero configuración y cero facturas… pero solo sabe
-enseñar **un punto por mapa**, así que la tarjeta va rotando entre las personas cada 45 s, con su
-nombre, su dirección y de cuándo es la posición. El iframe lleva `pointer-events: none`: el embed
-trae enlaces a Google Maps y, en un kiosco, un dedo te dejaría fuera del panel.
+El mapa se pinta con **Leaflet sobre las teselas de OpenStreetMap**: sin clave de API y sin
+facturas, y —a diferencia del *embed* de Google, que solo sabe marcar un punto— puede enseñar
+**casa y todos a la vez**, encuadrados con `fitBounds` para que quepan (el zoom se adapta solo a la
+distancia que haya). Cada persona lleva su pin con la inicial, una línea de puntos desde casa y una
+fila en el cartel con **a qué distancia está de casa** y de cuándo es la posición. Las teselas van
+con un filtro CSS que las gira a oscuro (`invert` + `hue-rotate`) para que encajen con el panel, y el
+mapa entero lleva `pointer-events: none`: en un kiosco, un dedo encima te dejaría moviéndolo y no
+volverías solo.
+
+Dónde está **casa** es un ajuste del dispositivo (`home`, con `label`, `latitude` y `longitude`), así
+que el repositorio no lleva la dirección de ninguna casa; sin él, el mapa solo encuadra a la gente y
+el cartel omite las distancias:
+
+```bash
+curl -X PUT -H 'content-type: application/json' \
+  -d '{"home":{"label":"Casa","latitude":41.6,"longitude":0.62}}' \
+  http://localhost:4173/api/settings
+```
+
+Las distancias son en línea recta (Haversine, `src/lib/geo.ts`), no por carretera: es lo que se mira
+de un vistazo para saber si alguien anda cerca o está al otro lado de la ciudad.
 
 **De dónde salen las ubicaciones**: de reutilizar la sesión del navegador. Google **no tiene API**
 para leer las ubicaciones compartidas de otros usuarios (es una petición abierta desde hace años);
@@ -414,7 +430,7 @@ Family_dash/
     │   ├── TasksWidget.tsx     # tarjeta 2: tareas pendientes
     │   ├── CalendarWidget.tsx  # tarjeta 3: próximos eventos del calendario
     │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
-    │   ├── MapWidget.tsx       # tarjeta 5: el mapa, rotando entre las personas
+    │   ├── MapWidget.tsx       # tarjeta 5: el mapa (casa + todos, con Leaflet)
     │   ├── AgentRoom.tsx       # tarjeta 6: el cuarto de los agentes (canvas + leyenda)
     │   ├── NewsStrip.tsx       # tarjeta 7: franja de titulares
     │   ├── NewsWidget.tsx      #   · una fuente, rotando sus titulares
@@ -443,7 +459,7 @@ Family_dash/
 | GET | `/api/health` | Estado, versión de Node, ruta de la BD y nº de entradas en caché |
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
 | GET | `/api/settings` | Localidad, fuentes de noticias, origen del PDF y agenda configurados (y los de por defecto) |
-| PUT | `/api/settings` | Cambia la localidad, las fuentes, el PDF y/o la agenda (ver ejemplos abajo) |
+| PUT | `/api/settings` | Cambia la localidad, las fuentes, el PDF, la agenda y/o dónde está casa (ver ejemplos abajo) |
 | GET | `/api/calendar` | Próximos eventos del calendario configurado, agrupables por día (`?days=7`, `?refresh=1`) |
 | GET | `/api/tasks` | Tareas pendientes de la lista configurada (o de todas), por fecha |
 | GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
@@ -490,9 +506,9 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
   estar visible o en línea. Los titulares de cada tarjeta **rotan cada 10 s**
   (`NEWS_ROTATE_MS`), que es cosa aparte del refresco.
 - `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`),
-  las fuentes de noticias (`news.sources`), de dónde sale el PDF (`pdf.source`) y qué
-  calendario y lista de tareas se enseñan (`agenda.target`). Las cuatro cosas viven
-  aquí y no en el código: cada casa pone las suyas.
+  las fuentes de noticias (`news.sources`), de dónde sale el PDF (`pdf.source`), qué
+  calendario y lista de tareas se enseñan (`agenda.target`) y dónde está casa
+  (`map.home`). Las cinco cosas viven aquí y no en el código: cada casa pone las suyas.
 - La caché de las páginas del PDF **no** va en la base de datos: se rasterizan a
   `data/pdf/<versión>/page-N.png` (fuera del repositorio) y solo se guarda la
   última versión del fichero.

@@ -27,8 +27,9 @@ export const NEWS_ROTATE_MS = 10 * 1000
 /** Cada cuánto se le vuelven a pedir las ubicaciones al backend (cachea 2 min). */
 export const LOCATIONS_REFRESH_MS = 2 * 60 * 1000
 
-/** Cada cuánto pasa el mapa a la siguiente persona que comparte su ubicación. */
-export const LOCATIONS_ROTATE_MS = 45 * 1000
+/* Aquí vivía LOCATIONS_ROTATE_MS: el mapa rotaba de persona en persona porque el
+   embed de Google solo sabe marcar un punto. Con Leaflet se enseñan casa y todos a
+   la vez, encuadrados para que quepan, así que ya no hay nada que rotar. */
 
 /** Cada cuánto se vuelve a mirar si ha cambiado el PDF de la carpeta compartida. */
 export const PDF_REFRESH_MS = 5 * 60 * 1000

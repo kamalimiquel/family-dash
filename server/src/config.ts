@@ -52,6 +52,19 @@ export const NEWS_TIMEOUT_MS = Number(process.env.NEWS_TIMEOUT_MS ?? 10_000)
 export const NEWS_MAX_BYTES = Number(process.env.NEWS_MAX_BYTES ?? 512 * 1024)
 
 /**
+ * Dónde está casa: el punto de referencia del mapa («a 1,2 km de casa»). Se
+ * ajusta en el dispositivo como todo lo demás; por defecto no hay ninguno y el
+ * mapa se limita a encuadrar a la gente que comparte su ubicación.
+ */
+export interface HomePlace {
+  label: string
+  latitude: number
+  longitude: number
+}
+
+export const DEFAULT_HOME: HomePlace | null = null
+
+/**
  * Qué calendario y qué lista de tareas enseña el panel. Son **nombres visibles**
  * («Familiar», «Familia») y se guardan en la base de datos del dispositivo: el
  * repositorio no lleva los nombres de las agendas de ninguna casa.

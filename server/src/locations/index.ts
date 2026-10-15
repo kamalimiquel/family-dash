@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import type { CacheResult } from '../cache.js'
 import { getOrFetch } from '../cache.js'
-import { LOCATIONS_COOKIES, LOCATIONS_TTL_MS } from '../config.js'
+import { LOCATIONS_COOKIES, LOCATIONS_TTL_MS, type HomePlace } from '../config.js'
 import type { Db } from '../db.js'
+import { getHome } from '../settings.js'
 import { isMock } from '../mock.js'
 import { mockPeople } from './mock.js'
 import { SharingError, cookieHeader, fetchSharedLocations } from './sharing.js'
@@ -30,6 +31,8 @@ export interface LocationReason {
 
 export interface LocationsSnapshot {
   people: LocationPerson[]
+  /** Dónde está casa (el punto de referencia del mapa), si está configurada. */
+  home: HomePlace | null
   reason: LocationReason | null
   meta: {
     source: string
@@ -68,7 +71,7 @@ export async function getLocations(
 
   if (isMock()) {
     const cache = await getOrFetch(db, CACHE_KEY, LOCATIONS_TTL_MS, async () => mockPeople(), 'mock')
-    return { people: cache.value, reason: null, meta: metaOf(cache, 'mock') }
+    return { people: cache.value, home: getHome(db), reason: null, meta: metaOf(cache, 'mock') }
   }
 
   // El lector de verdad: la sesión del navegador (el fichero de cookies) contra el
@@ -79,6 +82,7 @@ export async function getLocations(
   } catch {
     return {
       people: [],
+      home: getHome(db),
       reason: { error: 'sin_cookies', message: 'Faltan las cookies de Google Maps' },
       meta: null,
     }
@@ -93,11 +97,17 @@ export async function getLocations(
       () => fetchSharedLocations(cabecera),
       'google-locationsharing',
     )
-    return { people: cache.value, reason: null, meta: metaOf(cache, 'google-locationsharing') }
+    return {
+      people: cache.value,
+      home: getHome(db),
+      reason: null,
+      meta: metaOf(cache, 'google-locationsharing'),
+    }
   } catch (error) {
     const caducada = error instanceof SharingError && error.kind === 'sesion'
     return {
       people: [],
+      home: getHome(db),
       reason: {
         error: caducada ? 'sesion_caducada' : 'error',
         message: caducada

@@ -1,7 +1,62 @@
 import type { Db } from './db.js'
-import { DEFAULT_PLACE, type Place } from './config.js'
+import { DEFAULT_HOME, DEFAULT_PLACE, type HomePlace, type Place } from './config.js'
 
 const PLACE_KEY = 'weather.place'
+const HOME_KEY = 'map.home'
+
+/**
+ * Dónde está casa, para el mapa: la referencia de «a 1,2 km de casa». Vive en la
+ * base de datos del dispositivo, así que el repositorio no lleva direcciones de
+ * ninguna casa. Sin ajuste, el mapa solo encuadra a la gente.
+ */
+export function getHome(db: Db): HomePlace | null {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(HOME_KEY) as
+    | { value: string }
+    | undefined
+
+  if (!row) return DEFAULT_HOME
+
+  try {
+    return parseHome(JSON.parse(row.value))
+  } catch {
+    return DEFAULT_HOME
+  }
+}
+
+/** Con `null` (o `{latitude:null}`) se borra el ajuste y el mapa vuelve a no tener casa. */
+export function setHome(db: Db, input: unknown): HomePlace | null {
+  const valid = parseHome(input)
+
+  if (!valid) {
+    db.prepare('DELETE FROM settings WHERE key = ?').run(HOME_KEY)
+    return null
+  }
+
+  db.prepare(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).run(HOME_KEY, JSON.stringify(valid), Date.now())
+  return valid
+}
+
+/** Valida lo que llega por la API antes de guardarlo o usarlo. */
+export function parseHome(input: unknown): HomePlace | null {
+  if (input === null) return null
+  if (typeof input !== 'object') throw new Error('home debe ser un objeto o null')
+  const raw = input as Record<string, unknown>
+
+  const latitude = Number(raw.latitude)
+  const longitude = Number(raw.longitude)
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    throw new Error('home.latitude fuera de rango')
+  }
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw new Error('home.longitude fuera de rango')
+  }
+
+  const label = typeof raw.label === 'string' && raw.label.trim() ? raw.label.trim() : 'Casa'
+  return { label, latitude, longitude }
+}
 
 export function getPlace(db: Db): Place {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(PLACE_KEY) as
