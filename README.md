@@ -336,9 +336,9 @@ es el `sessionId` que manda el hook; sin él, el aviso vale para el robot entero
 Para añadir una máquina nueva (una vez por ordenador):
 
 ```bash
-# 1. El mismo hook, con el nombre que tendrá en el cuarto, apuntando al panel.
+# 1. Los dos scripts del hook, con el nombre que tendrá en el cuarto, apuntando al panel.
 mkdir -p ~/.hermes/agent-hooks
-cp room.sh ~/.hermes/agent-hooks/
+cp room.sh room-watch.sh ~/.hermes/agent-hooks/
 python3 ~/.hermes/agent-hooks/instalar-token.py http://<ip-del-panel>:4173/api/agents/state "Nombre de la máquina"
 # 2. El MISMO token que en las demás: copiar el data/agents-token (600) de una a otra.
 # 3. Los tres avisos de arriba y el permiso en shell-hooks-allowlist.json.
@@ -347,8 +347,19 @@ python3 ~/.hermes/agent-hooks/instalar-token.py http://<ip-del-panel>:4173/api/a
 El nombre visible puede llevar tildes («Portátil»); el identificador que viaja por la API se
 normaliza solo (`hermes-portatil`), así que dos máquinas nunca chocan.
 
-Y si un agente se queda sin dar señales, el backend lo va bajando solo: de trabajar a esperar y de
-esperar a dormir (5 y 20 minutos). Un estado que no se actualiza nunca acabaría mintiendo.
+**Cuándo se va un robot a la litera.** Un estado que no se actualiza nunca acabaría mintiendo, así
+que hay tres caminos y ninguno depende de que la máquina avise a tiempo:
+
+| Qué pasa | Cómo se entera el panel | Cuánto tarda |
+|----------|-------------------------|--------------|
+| El usuario cierra la aplicación | El **vigía** de esa sesión (`room-watch.sh`) ve morir el proceso y se despide | segundos |
+| Cierran la tapa, suspenden, hibernan o apagan de golpe | Nadie avisa: los latidos del vigía se cortan (`90 s` sin señal) | ~1,5 min |
+| Sesión sin vigía (las que entran por el gateway: Signal, cron…) | Deja de haber eventos | 3 min → esperando · 12 min → dormido |
+
+Los latidos no son actividad: un Hermes abierto y sin hacer nada se queda **esperando** (el robot
+hace malabares en la alfombra), no dormido. Para eso está el vigía: late cada 30 s mientras su
+proceso viva. Se vigila **la aplicación** (el escritorio o su servidor local), nunca el *gateway*,
+que es un servicio que vive siempre y dejaría al robot despierto para siempre.
 
 ---
 

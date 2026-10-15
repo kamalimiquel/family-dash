@@ -114,6 +114,19 @@ export function createAgentsRouter(db: Db, room: Room): Router {
       return
     }
 
+    // Latido del vigía de una sesión: no es un estado, es «sigo aquí». Sirve para
+    // que un Hermes abierto y sin hacer nada no parezca una máquina apagada, y para
+    // que al cerrar la aplicación (o al apagarla) el robot se vaya a la litera.
+    if (cuerpo.event === 'heartbeat') {
+      const agente = room.presence({
+        agentId,
+        displayName: typeof cuerpo.displayName === 'string' ? cuerpo.displayName : null,
+        sessionId: typeof cuerpo.sessionId === 'string' ? cuerpo.sessionId : null,
+      })
+      res.json({ ok: true, agent: agente })
+      return
+    }
+
     let estado: AgentState | null = null
 
     if (typeof cuerpo.state === 'string' && ESTADOS.includes(cuerpo.state as AgentState)) {

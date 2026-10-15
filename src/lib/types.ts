@@ -208,8 +208,10 @@ export interface AgentInfo {
   state: AgentState
   since: string
   detail: string | null
-  /** Sesiones de Hermes que tiene despiertas esa máquina. */
+  /** Cuántas sesiones de Hermes tiene despiertas esta máquina. */
   sessions: number
+  /** ISO 8601 de la última señal recibida (evento o latido), o null si nunca avisó. */
+  lastSeen?: string | null
 }
 
 export interface AgentsResponse {

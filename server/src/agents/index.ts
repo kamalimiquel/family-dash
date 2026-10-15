@@ -32,6 +32,8 @@ export interface Agent {
   detail: string | null
   /** Cuántas sesiones de Hermes tiene despiertas esta máquina. */
   sessions: number
+  /** ISO 8601 de la última señal recibida de esta máquina (latido incluido), o null si nunca ha avisado. */
+  lastSeen: string | null
 }
 
 interface Registro {
@@ -42,8 +44,15 @@ interface Registro {
 
 interface Sesion {
   state: AgentState
+  /** Cuándo cambió de estado (lo que se enseña como «hace tanto»). */
   since: number
   detail: string | null
+  /** Última señal recibida: evento o latido. Es la vida de la sesión. */
+  visto: number
+  /** Último evento de verdad (los latidos no cuentan). */
+  activo: number
+  /** Si tiene un vigía latiendo por ella (la aplicación está abierta). */
+  vigilada: boolean
 }
 
 interface Guardado {
@@ -51,6 +60,7 @@ interface Guardado {
   state: AgentState
   since: number
   detail: string | null
+  visto: number
 }
 
 /** Paleta de distintivos: los colores con los que se pinta cada robot. */
@@ -66,8 +76,21 @@ const COLORES = [
 /** Sin noticias en este rato, una sesión que trabajaba pasa a esperar. */
 const SIN_NOTICIAS_MS = 3 * 60 * 1000
 
-/** Y si sigue sin noticias, se echa a dormir. */
-const PARA_DORMIR_MS = 25 * 60 * 1000
+/**
+ * Y si sigue sin noticias, se echa a dormir. Solo se aplica a sesiones **sin** vigía
+ * (las que no tienen una aplicación abierta detrás, como una sesión que entra por el
+ * gateway): si el vigía late, la máquina está encendida y el robot se queda esperando.
+ */
+const PARA_DORMIR_MS = 12 * 60 * 1000
+
+/**
+ * Un vigía late cada 30 s; si pasan tres latidos sin saberse nada de él, la sesión se
+ * da por muerta y el robot se va a la litera. Esto es lo que cubre cerrar la tapa,
+ * suspender, hibernar o apagar de golpe: nadie avisa y se nota en ~1,5 minutos. Al
+ * cerrar la aplicación **de verdad** (el proceso termina) el vigía se despide, así que
+ * el robot se duerme en segundos.
+ */
+const PRESENCIA_MS = 90 * 1000
 
 const CLAVE_REGISTRO = 'agents.roster'
 
@@ -124,6 +147,7 @@ export class Room {
         since: new Date(guardado?.since ?? Date.now()).toISOString(),
         detail: guardado?.detail ?? null,
         sessions: this.despiertas(ficha.agentId),
+        lastSeen: guardado ? new Date(guardado.visto).toISOString() : null,
       }
     })
   }
@@ -153,11 +177,51 @@ export class Room {
     const clave = cambio.sessionId ?? '·'
     const anterior = deSesion.get(clave)
 
+    const ahora = Date.now()
     deSesion.set(clave, {
       state: cambio.state,
-      since: anterior && anterior.state === cambio.state ? anterior.since : Date.now(),
+      since: anterior && anterior.state === cambio.state ? anterior.since : ahora,
       detail: cambio.detail ?? null,
+      visto: ahora,
+      activo: ahora,
+      // Un evento no dice si hay vigía; lo dirá su primer latido (o no).
+      vigilada: anterior?.vigilada ?? false,
     })
+
+    return this.recalcular(cambio.agentId, ficha)
+  }
+
+  /**
+   * Latido del vigía de una sesión: la aplicación está abierta y esa sesión sigue
+   * viva, aunque ahora mismo no esté haciendo nada. No cambia el estado por sí solo
+   * (refresca la presencia) y, si la sesión aún no se conocía, la estrena esperando:
+   * un Hermes recién abierto está esperando, no trabajando.
+   */
+  presence(cambio: { agentId: string; displayName?: string | null; sessionId?: string | null }): Agent {
+    const ficha = this.fichaDe(cambio.agentId, cambio.displayName ?? null)
+
+    let deSesion = this.sesiones.get(cambio.agentId)
+    if (!deSesion) {
+      deSesion = new Map<string, Sesion>()
+      this.sesiones.set(cambio.agentId, deSesion)
+    }
+
+    const clave = cambio.sessionId ?? '·'
+    const ahora = Date.now()
+    const anterior = deSesion.get(clave)
+
+    if (anterior) {
+      deSesion.set(clave, { ...anterior, visto: ahora, vigilada: true })
+    } else {
+      deSesion.set(clave, {
+        state: 'waiting',
+        since: ahora,
+        detail: null,
+        visto: ahora,
+        activo: ahora,
+        vigilada: true,
+      })
+    }
 
     return this.recalcular(cambio.agentId, ficha)
   }
@@ -171,6 +235,15 @@ export class Room {
   /** Cuántos navegadores están escuchando (para el estado de la conexión). */
   get listeners(): number {
     return this.oyentes.size
+  }
+
+  /** La última señal (evento o latido) de cualquiera de sus sesiones. */
+  private ultimaSenal(agentId: string): number {
+    let ultima = 0
+    for (const sesion of this.sesiones.get(agentId)?.values() ?? []) {
+      if (sesion.visto > ultima) ultima = sesion.visto
+    }
+    return ultima || Date.now()
   }
 
   /** Sesiones que no están dormidas: las que de verdad cuentan. */
@@ -202,6 +275,7 @@ export class Room {
       state: estado,
       since: anterior && anterior.state === estado ? anterior.since : Date.now(),
       detail: detalle,
+      visto: this.ultimaSenal(agentId),
     }
     this.estados.set(agentId, guardado)
 
@@ -213,6 +287,7 @@ export class Room {
       since: new Date(guardado.since).toISOString(),
       detail: guardado.detail,
       sessions: this.despiertas(agentId),
+      lastSeen: new Date(guardado.visto).toISOString(),
     }
 
     // Solo se avisa si de verdad ha cambiado algo (el navegador no necesita ruido).
@@ -241,14 +316,39 @@ export class Room {
       let algoCambio = false
 
       for (const [clave, sesion] of deSesion) {
-        const silencio = ahora - sesion.since
+        // Los latidos no son actividad: para «trabajando -> esperando» cuenta el
+        // último evento de verdad, no la última señal.
+        const activa = ahora - sesion.activo
+        const sinSenal = ahora - sesion.visto
 
-        if (sesion.state === 'working' && silencio > SIN_NOTICIAS_MS) {
-          deSesion.set(clave, { state: 'waiting', since: ahora, detail: null })
+        const dormir = () => {
+          deSesion.set(clave, {
+            state: 'sleeping',
+            since: ahora,
+            detail: null,
+            visto: sesion.visto,
+            activo: sesion.activo,
+            vigilada: sesion.vigilada,
+          })
           algoCambio = true
-        } else if (sesion.state === 'waiting' && silencio > PARA_DORMIR_MS) {
-          deSesion.set(clave, { state: 'sleeping', since: ahora, detail: null })
+        }
+
+        if (sesion.vigilada && sinSenal > PRESENCIA_MS) {
+          // El vigía tenía que estar latiendo y no lo hace: se cerró la tapa, se
+          // suspendió, se apagó de golpe o mataron el proceso sin despedirse.
+          dormir()
+        } else if (sesion.state === 'working' && activa > SIN_NOTICIAS_MS) {
+          deSesion.set(clave, {
+            state: 'waiting',
+            since: ahora,
+            detail: null,
+            visto: sesion.visto,
+            activo: sesion.activo,
+            vigilada: sesion.vigilada,
+          })
           algoCambio = true
+        } else if (!sesion.vigilada && sesion.state === 'waiting' && activa > PARA_DORMIR_MS) {
+          dormir()
         }
       }
 
