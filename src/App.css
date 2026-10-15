@@ -824,10 +824,16 @@
 }
 
 /* Mismo trato que la agenda: la tarjeta no se estira para llenar el hueco (la fila
-   se adapta a lo que hay) y, si la lista crece más que su tarjeta, se desliza. */
+   se adapta a lo que hay) y, si la lista crece más que su tarjeta, se desliza.
+   Y centrada: la tarjeta de tareas comparte fila con la agenda, así que cuando hay
+   una o dos pendientes y la agenda va llena le queda un alto de sobra. Colgando de
+   arriba eso es un vacío; centrada, es una tarjeta corta en una tarjeta alta, que es
+   otra cosa. `safe` para que, cuando no quepan, empiecen por arriba y el scroll las
+   coja todas (con `center` a secas se cortaría la primera). */
 .widget--tasks .tasks__list {
   flex: 1;
   min-height: 0;
+  justify-content: safe center;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
