@@ -1149,10 +1149,13 @@
   width: var(--cm19);
   height: var(--cm12);
   justify-content: space-between;
-  /* En rem y no en cqh: las medidas de la propia tarjeta no ven su contenedor (caen al
-     1,4 % de la pantalla, 26,9 px) y ese hueco se comía el alto del radar. */
-  gap: 0.3rem;
-  padding: 3.2cqw;
+  /* El hueco y el padding, como los de todas las tarjetas y por el mismo motivo: en las
+     medidas de la PROPIA tarjeta, `cqw`/`cqh` no ven su contenedor y se resuelven contra
+     la pantalla (aquí salían 34,5 px de padding donde el sistema dice 20). Lo de dentro
+     sí puede ir en `cqh`, que es a propósito: al agrandarse la caja de contenido, todo
+     el contenido crece con ella y sigue llenando la tarjeta exacta. */
+  gap: var(--sp-1);
+  padding: var(--card-pad);
   text-align: left;
   overflow: hidden;
 }
@@ -1202,15 +1205,9 @@
   border-top: 0;
 }
 
-.widget--now .weather__place {
-  font-size: 5.14cqh;
-}
-
-.widget--now .weather__refresh {
-  width: 8.56cqh;
-  height: 8.56cqh;
-}
-
+/* El título y el botón de refrescar, como en las demás tarjetas: el título con el
+   tamaño de todos los títulos y el botón con el objetivo táctil de 44 px para arriba
+   (en `cqh` se quedaba en 27 px, que con un dedo se falla). */
 .widget--now .weather__hero {
   gap: 3.77cqh;
   margin-top: 0;
@@ -1647,37 +1644,40 @@
   scrollbar-width: thin;
 }
 
+/* La letra de dentro, contra la tarjeta (`cqw`): subió a lo legible desde el sofá
+   —era de 11-13 px— sin salirse del alto de la fila. Lo que no cabe, se desliza; el
+   «y N eventos más» sigue avisando de lo que no se ve. */
 .widget--calendar .calendar__account,
 .widget--calendar .calendar__hint {
-  font-size: 1.9cqw;
+  font-size: 2.4cqw;
 }
 
 .widget--calendar .calendar__day {
-  font-size: 2cqw;
+  font-size: 2.4cqw;
 }
 
 .widget--calendar .calendar__what {
-  font-size: 2.2cqw;
+  font-size: 3cqw;
 }
 
 .widget--calendar .calendar__time {
-  width: 11cqw;
-  font-size: 2cqw;
+  width: 14cqw;
+  font-size: 2.7cqw;
 }
 
 .widget--calendar .calendar__where {
-  font-size: 1.85cqw;
+  font-size: 2.3cqw;
 }
 
 .widget--calendar .calendar__more,
 .widget--calendar .calendar__empty {
-  font-size: 1.9cqw;
+  font-size: 2.3cqw;
 }
 
 .widget--calendar .calendar__foot,
 .widget--calendar .calendar__status,
 .widget--calendar .calendar__counts {
-  font-size: 1.75cqw;
+  font-size: 2cqw;
 }
 
 /* Las tareas van en la columna de 12 cm, en paralelo a la agenda: ocupan todo el
@@ -1785,10 +1785,101 @@
   .agents__foot {
     display: none;
   }
+
+  /* La tarjeta de la hora y el tiempo, en pantallas bajas, con tamaños fijos y sin
+     radar. Su diseño se mide con `cqh` contra su propia caja, y en apaisado la caja
+     es tan baja (153 px de 768) que el navegador no la da por contenedor válido: el
+     contenido se medía contra la PANTALLA y la temperatura salía de 137 px en una
+     caja de 99, desbordándose sobre la agenda (medido a 1366×768; con `width: auto`
+     o `100%` por igual). En vez de pelearse con eso, aquí manda lo que se lee: el
+     reloj, la temperatura y su detalle, con medidas que no dependen de nadie. El
+     radar es lo primero que sobra cuando no hay alto —como el menú o los titulares
+     en las pantallas de 7"— y en vertical, que es la pantalla de casa, no se toca
+     nada de esto. */
+  .widget--now {
+    padding: var(--sp-3);
+  }
+
+  /* Los huecos de dentro van en `cqh`, que aquí también cae a la pantalla (47 px de
+     hueco entre las dos columnas, 29 dentro del bloque del tiempo): a fijos. */
+  .now__body {
+    gap: var(--sp-2);
+  }
+
+  .widget--now .weather {
+    gap: var(--sp-1);
+  }
+
+  .widget--now .weather__hero {
+    gap: var(--sp-3);
+  }
+
+  .widget--now .weather__details {
+    gap: var(--sp-1) var(--sp-3);
+  }
+
+  .widget--now .clock {
+    gap: var(--sp-1);
+  }
+
+  /* Lo que se lee de un vistazo: el reloj, la temperatura y su detalle. El radar y la
+     previsión de días sobran cuando no hay alto —fuera antes que a medias, como el menú
+     y los titulares en las pantallas de 7"— y en vertical, que es la pantalla de casa,
+     se ven todos. */
+  .widget--now .radar,
+  .widget--now .weather__daily,
+  .widget--now .weather__details {
+    display: none;
+  }
+
+  .clock__time {
+    font-size: 2rem;
+  }
+
+  .clock__rule {
+    width: 2.6rem;
+  }
+
+  .clock__date,
+  .now__label,
+  .now__week {
+    font-size: 0.72rem;
+  }
+
+  .widget--now .weather__place {
+    font-size: 1.05rem;
+  }
+
+  .widget--now .weather__refresh {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .widget--now .weather__value {
+    font-size: 2.1rem;
+  }
+
+  .widget--now .weather__icon {
+    width: 1.4rem;
+  }
+
+  .widget--now .weather__extreme,
+  .widget--now .weather__condition,
+  .widget--now .weather__detail-term,
+  .widget--now .weather__detail-value,
+  .widget--now .weather__day-name,
+  .widget--now .weather__day-value {
+    font-size: 0.62rem;
+  }
+
+  .widget--now .weather__day-icon {
+    width: 0.9rem;
+  }
 }
 
 /* Pantallas bajas: menos días y, si hace falta, sin pie. */
 @media (max-height: 620px) {
+
   .weather__day:nth-child(n + 4) {
     display: none;
   }
@@ -1881,9 +1972,24 @@
     grid-auto-columns: minmax(0, 1fr);
   }
 
-  /* Y las tarjetas de tamaño físico (12, 19 y 10 cm) se sueltan: en apaisado no
-     caben a tamaño real, así que miden lo que su contenido. */
-  .widget--now,
+  /* Las tarjetas de tamaño físico se sueltan: en apaisado no caben a tamaño real, así
+     que el ancho lo pone su contenido. El ALTO no: la tarjeta de la hora y el tiempo se
+     mide por dentro con `cqh` (contra su propia caja), y con el alto en `auto` y
+     contención de tamaño ese alto queda indefinido —su contenido se calculaba contra
+     otra cosa y se salía por encima de la agenda, medido a 1366×768—. Con `height: 100%`
+     toma el de su fila y todo su interior se ajusta a él, que es como está pensada esa
+     tarjeta. */
+  .widget--now {
+    /* `width: 100%` y no `auto`: con `auto`, y aunque la rejilla lo estire, el navegador
+       no la da por contenedor de tamaño válido y todo su interior (que va en `cqh`) se
+       mide contra la PANTALLA —la temperatura salía de 137 px en una caja de 99—. Con el
+       ancho declarado, la tarjeta es contenedor de verdad y su contenido se ajusta a ella,
+       que es como está pensada. */
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
   .widget--tasks,
   .widget--pdf {
     width: auto;
