@@ -51,6 +51,20 @@ export const NEWS_TIMEOUT_MS = Number(process.env.NEWS_TIMEOUT_MS ?? 10_000)
 /** Tope de lectura por feed (un XML de noticias no llega ni de lejos). */
 export const NEWS_MAX_BYTES = Number(process.env.NEWS_MAX_BYTES ?? 512 * 1024)
 
+/**
+ * Qué calendario y qué lista de tareas enseña el panel. Son **nombres visibles**
+ * («Familiar», «Familia») y se guardan en la base de datos del dispositivo: el
+ * repositorio no lleva los nombres de las agendas de ninguna casa.
+ */
+export interface AgendaTarget {
+  /** Nombre del calendario, o `primary` para el principal de la cuenta. */
+  calendar: string
+  /** Nombre de la lista de tareas; vacío = todas las listas. */
+  taskList: string
+}
+
+export const DEFAULT_AGENDA_TARGET: AgendaTarget = { calendar: 'primary', taskList: '' }
+
 /** Fuente de noticias: un nombre para la pantalla y la URL del feed. */
 export interface NewsSource {
   name: string

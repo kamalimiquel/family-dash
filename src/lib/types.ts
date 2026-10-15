@@ -125,6 +125,8 @@ export interface AgendaReason {
 
 export interface CalendarResponse {
   events: CalendarEvent[]
+  /** Qué calendario se está enseñando (el configurado en el dispositivo). */
+  selection?: { calendar: string }
   status: GoogleStatus
   reason: AgendaReason | null
   meta: CacheMeta | null
@@ -133,6 +135,8 @@ export interface CalendarResponse {
 export interface TasksResponse {
   tasks: TaskItem[]
   lists: string[]
+  /** Qué lista de tareas se está enseñando (vacío = todas). */
+  selection?: { taskList: string }
   status: GoogleStatus
   reason: AgendaReason | null
   meta: CacheMeta | null

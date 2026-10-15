@@ -5,13 +5,20 @@ import { CALENDAR_DAYS, CALENDAR_TTL_MS, TASKS_TTL_MS } from '../config.js'
 import { googleStatus } from '../google/auth.js'
 import { fetchEvents, type CalendarEvent } from '../google/calendar.js'
 import { fetchTasks, type TasksResult } from '../google/tasks.js'
+import { getAgendaTarget } from '../google/target.js'
 
 /**
  * Si el problema es que falta configurar o autorizar Google, no es un error del
  * servidor: se responde 200 con la lista vacía y `reason`, para que el widget
  * pueda explicarlo en pantalla en vez de quedarse en blanco.
  */
-const SETUP_CODES = new Set(['google_not_configured', 'google_not_connected', 'invalid_grant'])
+const SETUP_CODES = new Set([
+  'google_not_configured',
+  'google_not_connected',
+  'invalid_grant',
+  'calendar_not_found',
+  'tasklist_not_found',
+])
 
 function setupReason(error: unknown): { error: string; message: string } | null {
   if (typeof error === 'object' && error !== null && 'code' in error) {
@@ -48,7 +55,9 @@ export function createAgendaRouter(db: Db): Router {
 
   router.get('/calendar', async (req: Request, res: Response, next: NextFunction) => {
     const days = clampDays(req.query.days, CALENDAR_DAYS)
-    const key = `calendar:${days}`
+    const target = getAgendaTarget(db)
+    // El calendario elegido va en la clave: cambiarlo no reutiliza la caché anterior.
+    const key = `calendar:${days}:${target.calendar}`
     const status = googleStatus(db)
     const source = status.mock ? 'mock' : 'google-calendar'
 
@@ -59,13 +68,14 @@ export function createAgendaRouter(db: Db): Router {
         db,
         key,
         CALENDAR_TTL_MS,
-        () => fetchEvents(db, { days }),
+        () => fetchEvents(db, { days, calendarName: target.calendar }),
         source,
       )
 
       res.set('Cache-Control', 'no-store')
       res.json({
         events: result.value,
+        selection: { calendar: target.calendar },
         status,
         reason: null,
         meta: cacheMeta(result.fetchedAt, result.expiresAt, result.cached, result.stale, source),
@@ -79,19 +89,27 @@ export function createAgendaRouter(db: Db): Router {
   })
 
   router.get('/tasks', async (req: Request, res: Response, next: NextFunction) => {
-    const key = 'tasks'
+    const target = getAgendaTarget(db)
+    const key = `tasks:${target.taskList}`
     const status = googleStatus(db)
     const source = status.mock ? 'mock' : 'google-tasks'
 
     try {
       if (wantsRefresh(req.query.refresh)) db.prepare('DELETE FROM cache WHERE key = ?').run(key)
 
-      const result = await getOrFetch<TasksResult>(db, key, TASKS_TTL_MS, () => fetchTasks(db), source)
+      const result = await getOrFetch<TasksResult>(
+        db,
+        key,
+        TASKS_TTL_MS,
+        () => fetchTasks(db, { listName: target.taskList }),
+        source,
+      )
 
       res.set('Cache-Control', 'no-store')
       res.json({
         tasks: result.value.tasks,
         lists: result.value.lists,
+        selection: { taskList: target.taskList },
         status,
         reason: null,
         meta: cacheMeta(result.fetchedAt, result.expiresAt, result.cached, result.stale, source),

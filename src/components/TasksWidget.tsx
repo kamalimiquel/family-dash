@@ -20,7 +20,10 @@ export function TasksWidget({ state }: { state: AgendaState }) {
 
   const visible = tasks.slice(0, MAX_TASKS)
   const hidden = Math.max(tasks.length - MAX_TASKS, 0)
-  const lists = new Set(tasks.map((task) => task.list)).size
+  const lists = [...new Set(tasks.map((task) => task.list))]
+  // Con una sola lista se enseña su nombre («Familia»); con varias, cuántas hay.
+  const listLabel =
+    lists.length === 1 ? lists[0] : lists.length > 1 ? plural(lists.length, 'lista', 'listas') : null
 
   const hint = reason
     ? (REASON_TEXT[reason.error] ?? reason.message)
@@ -72,7 +75,7 @@ export function TasksWidget({ state }: { state: AgendaState }) {
         <span className="tasks__status">
           {receivedAt ? `actualizado a las ${formatTimeShort(receivedAt)}` : '—'}
         </span>
-        {lists > 0 && <span className="tasks__lists">{plural(lists, 'lista', 'listas')}</span>}
+        {listLabel && <span className="tasks__lists">{listLabel}</span>}
       </footer>
     </section>
   )

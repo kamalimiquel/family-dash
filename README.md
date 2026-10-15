@@ -368,7 +368,7 @@ Family_dash/
 │       ├── settings.ts         # ajustes persistidos (localidad) y su validación
 │       ├── routes/
 │       │   ├── weather.ts      # GET /api/weather
-│       │   ├── settings.ts     # GET/PUT /api/settings (localidad y fuentes)
+│       │   ├── settings.ts     # GET/PUT /api/settings (localidad, fuentes, PDF y agenda)
 │       │   ├── google.ts       # estado y flujo de consentimiento (solo localhost)
 │       │   ├── agenda.ts       # GET /api/calendar y /api/tasks
 │       │   ├── news.ts         # GET /api/news
@@ -442,10 +442,10 @@ Family_dash/
 |--------|------|----------|
 | GET | `/api/health` | Estado, versión de Node, ruta de la BD y nº de entradas en caché |
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
-| GET | `/api/settings` | Localidad, fuentes de noticias y origen del PDF configurados (y los de por defecto) |
-| PUT | `/api/settings` | Cambia la localidad, las fuentes y/o el PDF (ver ejemplos abajo) |
-| GET | `/api/calendar` | Próximos eventos agrupables por día (`?days=7`, `?refresh=1`) |
-| GET | `/api/tasks` | Tareas pendientes de todas las listas, por fecha |
+| GET | `/api/settings` | Localidad, fuentes de noticias, origen del PDF y agenda configurados (y los de por defecto) |
+| PUT | `/api/settings` | Cambia la localidad, las fuentes, el PDF y/o la agenda (ver ejemplos abajo) |
+| GET | `/api/calendar` | Próximos eventos del calendario configurado, agrupables por día (`?days=7`, `?refresh=1`) |
+| GET | `/api/tasks` | Tareas pendientes de la lista configurada (o de todas), por fecha |
 | GET | `/api/news` | Titulares de cada fuente configurada (`?refresh=1` fuerza ir a la red) |
 | GET | `/api/locations` | Dónde está la familia que comparte su ubicación (`?refresh=1`) |
 | GET | `/api/agents` | Los agentes de Hermes y en qué estado están (trabajando, esperando, durmiendo) |
@@ -490,8 +490,9 @@ la tarjeta para escribir *"actualizado a las 14:48"* o *"sin conexión"*.
   estar visible o en línea. Los titulares de cada tarjeta **rotan cada 10 s**
   (`NEWS_ROTATE_MS`), que es cosa aparte del refresco.
 - `settings(key, value, updated_at)` — la localidad del tiempo (`weather.place`),
-  las fuentes de noticias (`news.sources`) y de dónde sale el PDF (`pdf.source`).
-  Las tres cosas viven aquí y no en el código: cada casa pone las suyas.
+  las fuentes de noticias (`news.sources`), de dónde sale el PDF (`pdf.source`) y qué
+  calendario y lista de tareas se enseñan (`agenda.target`). Las cuatro cosas viven
+  aquí y no en el código: cada casa pone las suyas.
 - La caché de las páginas del PDF **no** va en la base de datos: se rasterizan a
   `data/pdf/<versión>/page-N.png` (fuera del repositorio) y solo se guarda la
   última versión del fichero.
@@ -531,6 +532,21 @@ curl -X PUT -H 'content-type: application/json' \
   -d '{"pdf":{"dir":"/mnt/family-dashboard"}}' \
   http://localhost:4173/api/settings
 ```
+
+Y qué agenda se enseña: el **nombre visible** del calendario y el de la lista de
+tareas (se buscan en los que tenga la cuenta; los nombres no se guardan en el
+repositorio). Sin `taskList` se ven todas las listas, y `"calendar":"primary"` es el
+calendario principal:
+
+```bash
+curl -X PUT -H 'content-type: application/json' \
+  -d '{"agenda":{"calendar":"Familiar","taskList":"Familia"}}' \
+  http://localhost:4173/api/settings
+```
+
+Si el nombre no aparece en la cuenta, la tarjeta lo dice en pantalla
+(`calendar_not_found` / `tasklist_not_found`) en vez de quedarse vacía sin
+explicación.
 
 ---
 

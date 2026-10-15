@@ -2,6 +2,7 @@ import type { Db } from '../db.js'
 import { isMock } from './auth.js'
 import { googleFetch } from './api.js'
 import { mockTasks } from './mock.js'
+import { AgendaTargetError, normalizeName } from './target.js'
 
 const TASKS_API = 'https://tasks.googleapis.com/tasks/v1'
 
@@ -36,12 +37,38 @@ interface GoogleTasksPage {
   items?: GoogleTask[]
 }
 
-/** Tareas pendientes de todas las listas, primero las que tienen fecha. */
-export async function fetchTasks(db: Db, maxLists = 5): Promise<TasksResult> {
+export interface FetchTasksOptions {
+  /** Nombre visible de la lista que se enseña («Familia»); vacío = todas. */
+  listName?: string
+  /** Cuántas listas se miran cuando no se ha elegido ninguna (por defecto 5). */
+  maxLists?: number
+}
+
+/**
+ * Tareas pendientes de una lista concreta (o de todas), primero las que tienen
+ * fecha. Si se pide una lista que no existe, se avisa con `tasklist_not_found`
+ * en vez de enseñar una tarjeta vacía sin explicación.
+ */
+export async function fetchTasks(db: Db, options: FetchTasksOptions = {}): Promise<TasksResult> {
   if (isMock()) return mockTasks()
 
-  const listsData = await googleFetch<GoogleTaskList>(db, `${TASKS_API}/users/@me/lists?maxResults=100`)
-  const lists = (listsData.items ?? []).filter((list) => list.id).slice(0, maxLists)
+  const { listName = '', maxLists = 5 } = options
+
+  const listsData = await googleFetch<GoogleTaskList>(
+    db,
+    `${TASKS_API}/users/@me/lists?maxResults=100&fields=items(id,title)`,
+  )
+  const all = (listsData.items ?? []).filter((list) => list.id)
+
+  const wanted = listName.trim()
+  let lists = all.slice(0, maxLists)
+  if (wanted) {
+    const wantedKey = normalizeName(wanted)
+    lists = all.filter((list) => normalizeName(list.title ?? '') === wantedKey)
+    if (lists.length === 0) {
+      throw new AgendaTargetError('tasklist_not_found', `No encuentro la lista de tareas «${wanted}»`)
+    }
+  }
 
   const collected: TaskItem[] = []
   const listTitles: string[] = []
