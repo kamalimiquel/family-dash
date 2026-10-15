@@ -63,7 +63,12 @@
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: var(--cm19) minmax(0, 1fr) var(--cm12);
+  /* Dos columnas, 3:2 (60/40), para las tres filas. Antes eran tres columnas con la
+     partición en sitios distintos: la fila de arriba partía a 19 cm y las de abajo lo
+     hacían antes de la columna de 12, así que los repartos salían 59,6/40,4 y 62,4/37,6
+     y no había forma de que cuadraran con un 60/40 en las tres. Con dos columnas, cada
+     fila parte exactamente por el mismo sitio. */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   /* La fila de planificación (agenda y tareas) no mide siempre lo mismo: va de 14 a
      22 cm según lo que haya que enseñar. Con pocos eventos se queda corta y los
      titulares ganan el hueco (nunca menos de 5 cm); con la semana llena se planta en
@@ -76,10 +81,10 @@
      portátil la fila de titulares se quedaba en 4 px (medido). */
   grid-template-rows: var(--cm12) minmax(var(--cm14), var(--cm22)) var(--cm12) minmax(var(--cm5), 1fr);
   grid-template-areas:
-    'now map map'
-    'calendar calendar tasks'
-    'menu menu agents'
-    'news news news';
+    'now map'
+    'calendar tasks'
+    'menu agents'
+    'news news';
   align-content: start;
   gap: var(--gap);
   padding: var(--page);
@@ -123,7 +128,7 @@
    coloca en la rejilla —fila de los titulares, columna de la derecha— y se sube
    medio hueco: así cae en el hueco mida lo que mida el resto, también en apaisado. */
 .kiosk-exit {
-  grid-area: 4 / 3 / 5 / 4;
+  grid-area: 4 / 2 / 5 / 3;
   justify-self: end;
   align-self: start;
   z-index: 3;
@@ -1146,7 +1151,7 @@
    (cqw/cqh), así que no depende de la pantalla sino de la tarjeta. */
 .widget--now {
   container-type: size;
-  width: var(--cm19);
+  width: 100%;
   height: var(--cm12);
   justify-content: space-between;
   /* El hueco y el padding, como los de todas las tarjetas y por el mismo motivo: en las
@@ -1592,7 +1597,7 @@
   align-items: center;
   gap: 0.4em;
   color: var(--ink-soft);
-  font-size: var(--t-meta);
+  font-size: var(--t-lead);
 }
 
 .agents__chip {
@@ -1647,37 +1652,46 @@
 /* La letra de dentro, contra la tarjeta (`cqw`): subió a lo legible desde el sofá
    —era de 11-13 px— sin salirse del alto de la fila. Lo que no cabe, se desliza; el
    «y N eventos más» sigue avisando de lo que no se ve. */
-.widget--calendar .calendar__account,
+.widget--calendar .calendar__account {
+  font-size: var(--t-meta);
+}
+
 .widget--calendar .calendar__hint {
-  font-size: 2.4cqw;
+  font-size: var(--t-lead);
 }
 
 .widget--calendar .calendar__day {
-  font-size: 2.4cqw;
+  font-size: var(--t-meta);
 }
 
+/* El texto de leer (el título del evento, la tarea, la pista del menú y el nombre del
+   agente) va al mismo tamaño en las cuatro tarjetas de las dos filas de en medio:
+   `--t-lead`, 21,6 px en la pantalla de casa. La agenda sube (era 17,2), las tareas
+   bajan un poco (eran 24,4) y la lista de los agentes sube (era 12,8): el mismo tamaño
+   para todo, que era el encargo. Lo secundario —horas, etiquetas de día, vencimientos,
+   pies— se queda un escalón por debajo, para que la jerarquía se siga viendo. */
 .widget--calendar .calendar__what {
-  font-size: 3cqw;
+  font-size: var(--t-lead);
 }
 
 .widget--calendar .calendar__time {
-  width: 14cqw;
-  font-size: 2.7cqw;
+  width: 13cqw;
+  font-size: var(--t-body);
 }
 
 .widget--calendar .calendar__where {
-  font-size: 2.3cqw;
+  font-size: var(--t-meta);
 }
 
 .widget--calendar .calendar__more,
 .widget--calendar .calendar__empty {
-  font-size: 2.3cqw;
+  font-size: var(--t-meta);
 }
 
 .widget--calendar .calendar__foot,
 .widget--calendar .calendar__status,
 .widget--calendar .calendar__counts {
-  font-size: 2cqw;
+  font-size: var(--t-foot);
 }
 
 /* Las tareas van en la columna de 12 cm, en paralelo a la agenda: ocupan todo el
@@ -1688,12 +1702,12 @@
 }
 
 .widget--tasks .tasks__count {
-  font-size: 4.6cqw;
+  font-size: var(--t-meta);
 }
 
 .widget--tasks .tasks__item {
-  font-size: 6.6cqw;
-  gap: 2.4cqw;
+  font-size: var(--t-lead);
+  gap: var(--sp-3);
 }
 
 .widget--tasks .tasks__list {
@@ -1703,7 +1717,7 @@
 .widget--tasks .tasks__due,
 .widget--tasks .tasks__more,
 .widget--tasks .tasks__foot {
-  font-size: 4.4cqw;
+  font-size: var(--t-meta);
 }
 
 /* El menú: el ancho de la agenda y el alto de su fila (12 cm). Sin alto propio: si
@@ -1719,20 +1733,20 @@
   min-width: 0;
 }
 
+/* La letra del menú, con las escalas del sistema como las otras tres tarjetas de la
+   misma franja (`cqw` se resolvía contra la pantalla en cuanto la tarjeta no tenía
+   caja definida, y en apaisado la pista saltaba a 43 px). La miniatura, a llenar su
+   hueco con `height: 100%` (el de la regla base): así se lee y no depende de nadie. */
 .pdf__file {
-  font-size: 2.6cqw;
-}
-
-.pdf__thumb {
-  height: 66cqh;
+  font-size: var(--t-meta);
 }
 
 .pdf__hint {
-  font-size: 3.2cqw;
+  font-size: var(--t-lead);
 }
 
 .pdf__meta {
-  font-size: 2.6cqw;
+  font-size: var(--t-meta);
 }
 
 /* Los titulares se reparten lo que queda: con 12 + 22 + 10 cm por delante les
@@ -1948,19 +1962,6 @@
   .news-strip,
   .widget--pdf {
     display: none;
-  }
-}
-
-/* En apaisado los centímetros no caben, así que las columnas van a proporción. Los
-   números salen de pedir dos cosas a la vez: la fila de arriba 55/45 (el tiempo
-   contra el mapa) y las de abajo 60/40 (agenda contra tareas y menú contra agentes).
-   Con tres columnas —arriba el tiempo ocupa la primera y el mapa las otras dos;
-   abajo la agenda las dos primeras y su pareja la última— el reparto que cumple las
-   dos es 1,375 : 0,125 : 1 (en 1880 px de ancho: 1034 + 94 = 1128 para la agenda y
-   752 para las tareas, o sea 60/40; y el tiempo 1034 contra 846 de mapa, 55/45). */
-@media (orientation: landscape) {
-  .screen {
-    grid-template-columns: 1.375fr 0.125fr 1fr;
   }
 }
 
