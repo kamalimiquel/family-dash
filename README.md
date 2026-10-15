@@ -839,7 +839,21 @@ Para comprobar que la copia es fiel: comparar `sha256sum` de los dos árboles
 ```bash
 scripts/kiosk.sh            # arranca Chromium a pantalla completa
 scripts/restart-kiosk.sh    # lo reinicia (mata, limpia el perfil y relanza)
+scripts/kiosk-normal.sh     # lo saca del kiosco: deja el navegador en ventana normal
 ```
+
+El **pulsador redondo** de la esquina —1,5 cm, gris translúcido, con la casa— va entre
+la esquina inferior derecha del cuarto de los agentes y la franja de titulares, y hace
+lo que `kiosk-normal.sh`: deja el navegador en una ventana normal, maximizada.
+
+Una página **no puede** quitarse el `--kiosk` por sí sola: eso no es la pantalla
+completa de la API del navegador, así que no hay nada que salir desde dentro. Por eso
+el pulsador se lo pide al servidor del panel (`POST /api/kiosk/normal`, y **solo desde
+la propia máquina**), que cierra el Chromium del kiosco y lo vuelve a abrir sin
+`--kiosk` y con el mismo perfil: la sesión y las cookies siguen ahí. La ventana arranca
+en su propia unidad de systemd (`family-dash-ventana`, transitoria) para que un
+reinicio del panel no se la lleve por delante. Para volver al kiosco, `restart-kiosk.sh`
+—o reiniciar la máquina, que el kiosco lo pone el arranque automático—.
 
 ### Detalles que cuestan sangre (Wayland + kiosco)
 
@@ -860,6 +874,13 @@ scripts/restart-kiosk.sh    # lo reinicia (mata, limpia el perfil y relanza)
   arranca igual sin inhibidor).
 - **La pantalla táctil** está mapeada en `~/.config/labwc/rc.xml`
   (`<touch deviceName="ILITEK Multi-Touch-V5000 (USB 1-1.1)" mapToOutput="HDMI-A-1" mouseEmulation="yes"/>`).
+- **Colocar algo a caballo entre dos tarjetas: con la rejilla, no con números a mano.**
+  El pulsador va en la fila de los titulares y la columna de la derecha, subido medio
+  hueco (`translateY(calc(-50% - var(--gap) / 2))`): así cae en el hueco mida lo que mida
+  el resto, también en apaisado. Calculado a mano, se descuadra en cuanto cambia una fila.
+- **La ventana normal y el kiosco comparten perfil**, y `restart-kiosk.sh` mata por
+  `--user-data-dir`: se lleva por delante las dos. Es lo que devuelve el kiosco a su
+  sitio, pero conviene saberlo antes de pulsar el pulsador y desplegar a la vez.
 
 ### Comprobar / depurar en la Pi
 
