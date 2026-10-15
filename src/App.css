@@ -1041,7 +1041,9 @@
   width: var(--cm19);
   height: var(--cm12);
   justify-content: space-between;
-  gap: 1.4cqh;
+  /* En rem y no en cqh: las medidas de la propia tarjeta no ven su contenedor (caen al
+     1,4 % de la pantalla, 26,9 px) y ese hueco se comía el alto del radar. */
+  gap: 0.3rem;
   padding: 3.2cqw;
   text-align: left;
   overflow: hidden;
@@ -1069,15 +1071,15 @@
 }
 
 .clock__time {
-  font-size: 19.69cqh;
+  font-size: 12.5cqh;
 }
 
 .clock__rule {
-  width: 41.09cqh;
+  width: 26cqh;
 }
 
 .clock__date {
-  font-size: 3.94cqh;
+  font-size: 3.1cqh;
 }
 
 /* --- derecha: el tiempo, con su detalle y la previsión --- */
@@ -1179,23 +1181,15 @@
 
 .now__izq {
   display: flex;
+  /* El radar se queda con lo que sobre de la columna; el reloj, lo suyo. */
+  height: 100%;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   gap: 1.23cqh;
-}
-
-/* El reloj deja sitio al radar: sigue arriba, pero más recogido. */
-.widget--now--abierto .clock__time {
-  font-size: 12.5cqh;
-}
-
-.widget--now--abierto .clock__rule {
-  width: 26cqh;
-}
-
-.widget--now--abierto .clock__date {
-  font-size: 3.1cqh;
+  /* La columna ocupa el alto de la tarjeta aunque el cuerpo cente sus hijos: sin esto
+     el radar (que se estira con `flex: 1`) se queda sin alto y no se ve. */
+  align-self: stretch;
 }
 
 /* --- el radar de Meteocat --- */
@@ -1203,6 +1197,10 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  /* `contain: size` para que el mapa no aporte tamaño al reparto de la tarjeta: su
+     atribución de Leaflet es ancha y, sin esto, ensanchaba la columna del reloj y de
+     rebote estrechaba la del tiempo (que es la que no se debe mover). */
+  contain: size;
   border-radius: 0.5rem;
   overflow: hidden;
   background: rgba(8, 10, 24, 0.55);
@@ -1225,7 +1223,7 @@
 .radar__map .leaflet-control-attribution {
   background: rgba(6, 8, 20, 0.6);
   color: var(--ink-faint);
-  font-size: 1.1cqh;
+  font-size: 2.2cqh;
 }
 
 .radar__map .leaflet-control-attribution a {
@@ -1240,7 +1238,8 @@
   padding: 0.3cqh 0.8cqh;
   border-radius: 0.4rem;
   background: rgba(6, 8, 20, 0.62);
-  font-size: 2.1cqh;
+  /* En cqh y no en cqw: la tarjeta cambia de ancho, el alto no. */
+  font-size: 3.1cqh;
 }
 
 .radar__pie {

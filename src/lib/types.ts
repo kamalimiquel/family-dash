@@ -207,6 +207,8 @@ export interface RadarFrame {
   path: { year: string; month: string; day: string; hour: string; minute: string } | null
   /** Rectángulo que se enseña (Cataluña). */
   view: { south: number; west: number; north: number; east: number }
+  /** El mismo radar encuadrado en la localidad: el de la tarjeta en reposo. */
+  viewCiudad: { south: number; west: number; north: number; east: number }
   credit: string
   reason: AgendaReason | null
   meta: CacheMeta | null

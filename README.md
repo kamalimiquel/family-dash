@@ -364,12 +364,18 @@ que es un servicio que vive siempre y dejaría al robot despierto para siempre.
 
 ### Fase 11 — el radar de Meteocat, al desplegar la tarjeta del tiempo ✅
 
-La tarjeta de la hora y el tiempo **se despliega al tocarla**: se ensancha hacia la derecha
-hasta ocupar toda la fila de arriba (los 32,9 cm que suman la tarjeta y el mapa, que queda
-tapado), el reloj se queda **arriba** y debajo aparece el **radar de precipitación con
-Cataluña encuadrada**. La columna de la derecha —temperatura, detalle y previsión— **no se
-mueve ni cambia de tamaño**: se cierra tocando otra vez la tarjeta, tocando fuera o con
-Escape, y el radar se pide **solo mientras está desplegada**.
+La tarjeta de la hora y el tiempo lleva **el reloj arriba y el radar de precipitación debajo**,
+en los dos estados. En reposo el radar va **encuadrado en la localidad** —los ~20 × 23 km de
+la ciudad y su comarca, que es lo que cabe en una tarjeta de 19 cm— y, al tocarla, la tarjeta
+**se despliega hacia la derecha** hasta ocupar toda la fila de arriba (los 32,9 cm que suman la
+tarjeta y el mapa, que queda tapado) y el radar pasa a enseñar **Cataluña entera**. La columna
+de la derecha —temperatura, detalle y previsión— **no se mueve ni cambia de tamaño** en ningún
+caso. Se cierra tocando otra vez la tarjeta, tocando fuera o con Escape.
+
+El encuadre de la ciudad no está en el código: sale de la **localidad del dispositivo**
+(`GET /api/radar` lo devuelve en `viewCiudad`, calculado a partir de los ajustes del aparato),
+así que cambiar de ciudad en la base de datos cambia el radar sin tocar nada más. La caché del
+radar va por localidad, para que ese cambio no reutilice la respuesta anterior.
 
 El radar es el de **Meteocat** (el Servei Meteorològic de Catalunya). No tiene API pública,
 pero su propio giny (`static-m.meteo.cat/ginys/mapaRadar`) se apoya en dos cosas abiertas
@@ -386,10 +392,18 @@ Tres detalles que costaron su rato y conviene no volver a descubrir:
 - **El radar se publica a un único zoom (7)** y en un rectángulo fijo (teselas x 62-67,
   y 78-83): por debajo se encogen sus teselas y por encima se estiran (`minNativeZoom` /
   `maxNativeZoom`), para no pedir zooms que no existen y comerse 404.
-- **El fondo es de OpenStreetMap**, no el de Meteocat: sus teselas de mar son de un gris
-  plano que, girado a oscuro como el resto del panel, deja un parche feo al este. El fondo
+- **El fondo es de OpenStreetMap**, no el `fons` de Meteocat: sus teselas de mar son de un gris
+  plano que, girado a oscuro como el resto del panel, deja un parche gris al este. El fondo
   va en su propio *pane* con el filtro (y con `z-index` explícito, porque el pane se crea el
   último y si no tapa al radar).
+- **La vista de la ciudad estira las teselas del zoom 7** (`maxNativeZoom`): el radar solo se
+  publica a ese zoom, pero su producto es de un kilómetro por píxel, así que a 20 km de ancho
+  no se pierde nada.
+- El radar lleva `contain: size`: sin eso, la etiqueta de atribución de Leaflet es más ancha
+  que el mapa, ensancha la columna del reloj y —como el reparto de la tarjeta se mide por su
+  contenido— estrecha la del tiempo, que es la que no se debe mover. Y el `gap` de la tarjeta
+  pasó de `cqh` a `rem`: al ser una medida de la propia tarjeta, `cqh` no ve su contenedor y
+  caía al 1,4 % de la pantalla (26,9 px), comiéndose el alto que necesita el radar.
 
 La tarjeta desplegada se pone casi opaca: encima del mapa, con el cristal translúcido de
 siempre, se transparentaba el mapa de debajo y no se leía ni el radar ni el tiempo.

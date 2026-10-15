@@ -1,5 +1,6 @@
 import type { Db } from '../db.js'
 import { getOrFetch } from '../cache.js'
+import { getPlace } from '../settings.js'
 import { RADAR_TTL_MS, RADAR_VIEW } from '../config.js'
 
 /**
@@ -38,6 +39,12 @@ export interface RadarFrame {
   tiles: { radar: string }
   /** Rectángulo que hay que enseñar (Cataluña). */
   view: { south: number; west: number; north: number; east: number }
+  /**
+   * El mismo radar, encuadrado en la localidad del dispositivo (unos 20 x 23 km): es
+   * el que va en la tarjeta en reposo, donde solo cabe la ciudad. Sale de la base de
+   * datos del aparato, no del código.
+   */
+  viewCiudad: { south: number; west: number; north: number; east: number }
   /** A quién hay que acreditar. */
   credit: string
 }
@@ -74,9 +81,27 @@ async function pedirUltimaImagen(): Promise<string> {
   return datos.dataUltimaImatge
 }
 
+/**
+ * El encuadre de la ciudad: la localidad configurada con un margen de unos 10 km, que
+ * es lo que se ve en el radar pequeño de la tarjeta (la ciudad y su comarca).
+ */
+export function vistaCiudad(latitude: number, longitude: number): RadarFrame['viewCiudad'] {
+  const lat = 0.085
+  const lon = 0.115
+  return {
+    south: latitude - lat,
+    north: latitude + lat,
+    west: longitude - lon,
+    east: longitude + lon,
+  }
+}
+
 /** El marco de radar más reciente que publica Meteocat (cacheado 5 min). */
 export async function getRadar(db: Db): Promise<RadarFrame> {
-  const cache = await getOrFetch<RadarFrame>(db, CLAVE, RADAR_TTL_MS, async () => {
+  // La caché va por localidad: si se cambia de ciudad, no vale la respuesta anterior.
+  const place = getPlace(db)
+  const clave = `${CLAVE}:${place.latitude.toFixed(3)}:${place.longitude.toFixed(3)}`
+  const cache = await getOrFetch<RadarFrame>(db, clave, RADAR_TTL_MS, async () => {
     const última = await pedirUltimaImagen()
     const path = parseStamp(última)
     const iso = parseIso(última)
@@ -91,6 +116,7 @@ export async function getRadar(db: Db): Promise<RadarFrame> {
         radar: `${BASE}/tiles/radar/${path.year}/${path.month}/${path.day}/${path.hour}/${path.minute}`,
       },
       view: RADAR_VIEW,
+      viewCiudad: vistaCiudad(place.latitude, place.longitude),
       credit: 'Radar: Meteocat (SMC)',
     } satisfies RadarFrame
   }, 'meteocat-radar')

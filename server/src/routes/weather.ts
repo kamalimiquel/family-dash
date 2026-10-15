@@ -3,7 +3,7 @@ import type { Db } from '../db.js'
 import { getPlace } from '../settings.js'
 import { getOrFetch } from '../cache.js'
 import { fetchWeather, type WeatherSnapshot } from '../weather/openMeteo.js'
-import { getRadar } from '../weather/radar.js'
+import { getRadar, vistaCiudad } from '../weather/radar.js'
 import { RADAR_VIEW, RADAR_TTL_MS, WEATHER_TTL_MS } from '../config.js'
 
 /** Clave de caché por coordenadas redondeadas (~11 m), estable entre llamadas. */
@@ -29,6 +29,7 @@ export function createWeatherRouter(db: Db): Router {
       res.set('Cache-Control', 'no-store')
       res.json({
         view: RADAR_VIEW,
+        viewCiudad: vistaCiudad(getPlace(db).latitude, getPlace(db).longitude),
         tiles: null,
         path: null,
         imageAt: null,

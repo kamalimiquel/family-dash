@@ -5,26 +5,47 @@ import type { RadarState } from '../hooks/useRadar'
 import type { RadarFrame } from '../lib/types'
 import { formatTimeShort } from '../lib/time'
 
+/** En reposo se enseña la ciudad (la tarjeta es estrecha); desplegada, Cataluña entera. */
+export type ModoRadar = 'ciudad' | 'cataluna'
+
 /**
  * El radar de precipitación de Meteocat, sobre un mapa de Leaflet.
  *
+ * Se usa en los dos estados de la tarjeta del tiempo: pequeño y encuadrado en la
+ * localidad (`modo="ciudad"`) cuando la tarjeta está en reposo, y con Cataluña entera
+ * (`modo="cataluna"`) cuando está desplegada. El mapa se monta una sola vez y al cambiar
+ * de modo solo se reencuadra, así que pasar de uno a otro es instantáneo.
+ *
  * Las teselas de Meteocat llevan una ruta con el relleno a mano
  * (`{z:02}/000/000/{x:03}/000/000/{y:03}.png`) y la `y` invertida (TMS), así que la
- * dirección de cada tesela se compone aquí. La vista es Cataluña entera y el mapa no
- * recibe toques: en un kiosco, un dedo encima te dejaría moviéndolo y no volverías solo.
+ * dirección de cada tesela se compone aquí. Y como el radar solo se publica al zoom 7,
+ * la vista de la ciudad va con esas teselas estiradas: el producto de Meteocat tiene un
+ * kilómetro por píxel, así que no se pierde nada. El mapa no recibe toques: en un kiosco,
+ * un dedo encima te dejaría moviéndolo y no volverías solo.
  */
-export function WeatherRadar({ state }: { state: RadarState }) {
+export function WeatherRadar({ state, modo = 'cataluna' }: { state: RadarState; modo?: ModoRadar }) {
   const nodo = useRef<HTMLDivElement | null>(null)
   const mapa = useRef<L.Map | null>(null)
   const capaRadar = useRef<L.TileLayer | null>(null)
 
   const frame = state.data
-  const vista = state.data?.view
+  const vista = modo === 'ciudad' ? state.data?.viewCiudad : state.data?.view
+  const hayVista = Boolean(vista)
 
-  // El mapa se monta en cuanto se sabe qué rectángulo enseñar (la vista llega con la
-  // primera respuesta, que puede tardar: por eso el efecto depende de ella).
+  // La vista y el zoom vigentes, para que el observador de tamaño sepa qué reencuadrar
+  // aunque el modo haya cambiado desde que se montó el mapa.
+  const vistaRef = useRef(vista)
+  const zoomRef = useRef(ZOOM_RADAR)
+
   useEffect(() => {
-    if (!nodo.current || mapa.current || !vista) return
+    vistaRef.current = vista
+    zoomRef.current = modo === 'ciudad' ? ZOOM_CIUDAD : ZOOM_RADAR
+  }, [vista, modo])
+
+  // El mapa se monta una vez, en cuanto se sabe qué rectángulo enseñar (los datos
+  // pueden tardar, por eso el efecto depende de que haya vista).
+  useEffect(() => {
+    if (!nodo.current || mapa.current || !vistaRef.current) return
 
     const instancia = L.map(nodo.current, {
       zoomControl: false,
@@ -38,7 +59,7 @@ export function WeatherRadar({ state }: { state: RadarState }) {
       zoomSnap: 0,
       zoomDelta: 0.25,
       minZoom: ZOOM_MIN,
-      maxZoom: ZOOM_MAX,
+      maxZoom: ZOOM_CIUDAD + 1,
     })
 
     // El fondo va en su propio *pane* para poder girarlo a oscuro sin girar el radar.
@@ -65,8 +86,10 @@ export function WeatherRadar({ state }: { state: RadarState }) {
     mapa.current = instancia
 
     const encuadrar = () => {
+      const caja = vistaRef.current
+      if (!caja) return
       instancia.invalidateSize()
-      instancia.fitBounds(cuadro(vista), { padding: [4, 4], animate: false, maxZoom: ZOOM_RADAR })
+      instancia.fitBounds(cuadro(caja), { padding: [4, 4], animate: false, maxZoom: zoomRef.current })
     }
 
     const observador = new ResizeObserver(encuadrar)
@@ -82,7 +105,15 @@ export function WeatherRadar({ state }: { state: RadarState }) {
       mapa.current = null
       capaRadar.current = null
     }
-  }, [vista])
+  }, [hayVista])
+
+  // Al cambiar de estado la tarjeta (en reposo / desplegada) solo hay que reencuadrar.
+  useEffect(() => {
+    const instancia = mapa.current
+    if (!instancia || !vista) return
+    instancia.invalidateSize()
+    instancia.fitBounds(cuadro(vista), { padding: [4, 4], animate: false, maxZoom: zoomRef.current })
+  }, [vista, modo])
 
   // El radar sí cambia: cada pocos minutos hay imagen nueva.
   useEffect(() => {
@@ -118,19 +149,20 @@ export function WeatherRadar({ state }: { state: RadarState }) {
   )
 }
 
+/** El radar de Meteocat se publica a un único zoom (7). */
+const ZOOM_RADAR = 7
+
+/** El mapa nunca sale de aquí: debajo de 5 las teselas del fondo no existen. */
+const ZOOM_MIN = 5
+
+/** La ciudad, estirada desde el zoom del radar (su resolución nativa es de 1 km/px). */
+const ZOOM_CIUDAD = 10
+
 /** «2026-10-15T12:42:00Z» → «14:42» en la hora del navegador (o null si no hay fecha). */
 function horaLocal(iso: string): string | null {
   const fecha = new Date(iso)
   return Number.isNaN(fecha.getTime()) ? null : formatTimeShort(fecha)
 }
-
-/** El radar de Meteocat se publica a un único zoom (7). */
-const ZOOM_RADAR = 7
-
-/** El mapa nunca sale de aquí: debajo de 4 las teselas del fondo no existen y
-    7 es el zoom del radar, que es lo que se quiere mirar. */
-const ZOOM_MIN = 5
-const ZOOM_MAX = ZOOM_RADAR
 
 /** Una capa de teselas cuya dirección se compone a mano (Meteocat no usa el patrón normal). */
 function capaTeselas(prefix: string, opciones: L.TileLayerOptions): L.TileLayer {

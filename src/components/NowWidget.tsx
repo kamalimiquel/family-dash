@@ -16,15 +16,15 @@ interface NowWidgetProps {
  * El reloj y el tiempo son bloques sueltos (`ClockWidget`, `WeatherWidget`); la
  * tarjeta de cristal la pone este componente, para que se lean como una cosa.
  *
- * Al tocarla se despliega hacia la derecha (ocupa toda la fila de arriba): el reloj
- * se queda arriba y debajo aparece el **radar de Meteocat**, encuadrado en Cataluña.
- * La columna de la derecha —temperatura y previsión— no cambia ni de sitio ni de
- * tamaño. Se cierra tocando otra vez la tarjeta, tocando fuera o con Escape; el
- * radar solo se pide mientras está desplegada.
+ * El reloj va arriba y debajo el **radar de Meteocat**: en reposo encuadrado en la
+ * localidad (que es lo que cabe de ancho) y, al tocar la tarjeta, esta se despliega
+ * hacia la derecha —ocupa toda la fila de arriba— y el radar pasa a enseñar Cataluña
+ * entera. La columna de la derecha —temperatura y previsión— no cambia ni de sitio ni
+ * de tamaño. Se cierra tocando otra vez la tarjeta, tocando fuera o con Escape.
  */
 export function NowWidget({ now, weather }: NowWidgetProps) {
   const [abierto, setAbierto] = useState(false)
-  const radar = useRadar(abierto)
+  const radar = useRadar()
 
   useEffect(() => {
     if (!abierto) return
@@ -53,8 +53,8 @@ export function NowWidget({ now, weather }: NowWidgetProps) {
       aria-expanded={abierto}
       aria-label={
         abierto
-          ? 'Hora, tiempo y radar de Meteocat. Toca para cerrar'
-          : 'Hora y tiempo. Toca para ver el radar'
+          ? 'Hora, tiempo y radar de Cataluña. Toca para cerrar'
+          : 'Hora, tiempo y radar de la ciudad. Toca para ver todo Cataluña'
       }
       onClick={() => setAbierto((valor) => !valor)}
       onKeyDown={(event) => {
@@ -76,7 +76,9 @@ export function NowWidget({ now, weather }: NowWidgetProps) {
       <div className="now__body">
         <div className="now__izq">
           <ClockWidget now={now} />
-          {abierto && <WeatherRadar state={radar} />}
+          {/* El radar está siempre: en reposo con la ciudad encuadrada (que es lo que cabe
+              en la tarjeta) y desplegada con Cataluña entera. */}
+          <WeatherRadar state={radar} modo={abierto ? 'cataluna' : 'ciudad'} />
         </div>
 
         <div className="now__clima">

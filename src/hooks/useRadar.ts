@@ -11,10 +11,11 @@ export interface RadarState {
 }
 
 /**
- * El radar de Meteocat, solo mientras el desplegable del tiempo está abierto: el
- * widget lo llama únicamente entonces, así que de cerrado no se pide nada.
+ * El radar de Meteocat. Se pide siempre (la tarjeta lo enseña también en reposo, con
+ * la ciudad encuadrada) y se refresca cada 5 minutos, lo que tarda Meteocat en rehacer
+ * la imagen; el servidor lo cachea igual, así que no se machaca a nadie.
  */
-export function useRadar(activo: boolean): RadarState {
+export function useRadar(activo = true): RadarState {
   const [data, setData] = useState<RadarFrame | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
