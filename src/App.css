@@ -12,13 +12,13 @@
 :root {
   /* --- medidas del panel ----------------------------------------------------
      La pantalla de la Pi son 27" con 1080x1920: 81,6 px/pulgada, o sea 32,12 px por
-     centímetro. Las tres filas fijas suman 46 cm (12 + 22 + 12), así que el centímetro
+     centímetro. Las tres filas fijas suman 44 cm (12 + 20 + 12), así que el centímetro
      se recorta solo cuando la pantalla es más baja —en un portátil de 800 px de alto
      salen ~16 px/cm, y en uno de 600, ~11,5— y así nunca aparece scroll vertical ni
      se queda contenido cortado. El hueco y el margen son los mismos en todas partes. */
   --page: 20px;
   --gap: 16px;
-  --cm: min(32.12px, calc((100vh - var(--page) * 2 - var(--gap) * 3 - 4px) / 53));
+  --cm: min(32.12px, calc((100vh - var(--page) * 2 - var(--gap) * 3 - 4px) / 49));
   --cm5: calc(5 * var(--cm));
   --cm9: calc(9 * var(--cm));
   --cm10: calc(10 * var(--cm));
@@ -26,6 +26,7 @@
   --cm14: calc(14 * var(--cm));
   --cm15: calc(1.5 * var(--cm));
   --cm19: calc(19 * var(--cm));
+  --cm20: calc(20 * var(--cm));
   --cm22: calc(22 * var(--cm));
 
   /* --- espaciado: múltiplos de 4 ------------------------------------------- */
@@ -72,14 +73,17 @@
   /* La fila de planificación (agenda y tareas) no mide siempre lo mismo: va de 14 a
      22 cm según lo que haya que enseñar. Con pocos eventos se queda corta y los
      titulares ganan el hueco (nunca menos de 5 cm); con la semana llena se planta en
-     el tope y los eventos
+     el tope de 20 cm y los eventos
      se deslizan dentro de su tarjeta. Las otras dos filas son fijas: la de arriba
      porque el reloj y el mapa no cambian de tamaño, y la del menú porque el cuarto
      de los agentes necesita sus 180 px de alto y la vista del PDF se agradece
-     grande. Las tres fijas a tope suman 46 cm, y a eso se le reservan otros 7 para
-     la franja de titulares: de ahí el 53 de la fórmula. Sin esa reserva, en un
-     portátil la fila de titulares se quedaba en 4 px (medido). */
-  grid-template-rows: var(--cm12) minmax(var(--cm14), var(--cm22)) var(--cm12) minmax(var(--cm5), 1fr);
+     grande. Las tres fijas a tope suman 44 cm, y a eso se le reservan 5 más para la
+     franja de titulares: de ahí el 49 de la fórmula. Sin esa reserva, en un portátil
+     la fila de titulares se quedaba en 4 px (medido).
+     La fila de en medio baja a 20 cm (era 22) para que los titulares tengan alto de
+     sobra con tres líneas de titular, que es lo que puede llegar a ocupar el más
+     largo: con el borde de abajo a la misma distancia que el de arriba. */
+  grid-template-rows: var(--cm12) minmax(var(--cm12), var(--cm20)) var(--cm12) minmax(var(--cm5), 1fr);
   grid-template-areas:
     'now map'
     'calendar tasks'
@@ -907,43 +911,26 @@
 /* La miniatura se lleva todo el alto que le deje la tarjeta en vez de un tamaño
    fijo: es lo que se mira, y así la vista previa se lee de verdad. El texto, a su
    lado y centrado con ella. */
+/* Solo el documento. Se centra en su hueco, que es todo el alto disponible: una hoja
+   A4 es más alta que ancha, así que llena el alto y el ancho que su formato le deja. */
 .pdf__body {
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: center;
-  gap: var(--sp-5);
+  justify-content: center;
 }
 
 .pdf__thumb {
   flex: none;
   height: 100%;
   width: auto;
-  max-width: 55%;
   object-fit: contain;
   object-position: left center;
   border-radius: var(--sp-1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: #fff;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-}
-
-.pdf__info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-
-.pdf__hint {
-  font-size: var(--t-lead);
-  color: var(--ink-soft);
-}
-
-.pdf__meta {
-  font-size: var(--t-meta);
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
 }
 
 .pdf__empty {
@@ -1083,6 +1070,9 @@
   backdrop-filter: blur(14px) saturate(1.2);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: var(--card-shadow);
+  /* El navegador no debe quedarse el gesto horizontal: lo usamos nosotros para pasar
+     de titular. El vertical sí que se lo dejamos, por si algún día la tarjeta desliza. */
+  touch-action: pan-y;
 }
 
 .news__source {
@@ -1101,7 +1091,9 @@
   line-height: 1.28;
   color: var(--ink);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* Tres líneas: es lo que llega a ocupar un titular largo, y la fila tiene alto de
+     sobra para que no empuje el borde de abajo de la pantalla. */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   animation: news-in 420ms ease both;
@@ -1738,14 +1730,6 @@
    caja definida, y en apaisado la pista saltaba a 43 px). La miniatura, a llenar su
    hueco con `height: 100%` (el de la regla base): así se lee y no depende de nadie. */
 .pdf__file {
-  font-size: var(--t-meta);
-}
-
-.pdf__hint {
-  font-size: var(--t-lead);
-}
-
-.pdf__meta {
   font-size: var(--t-meta);
 }
 

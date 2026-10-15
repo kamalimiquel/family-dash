@@ -76,18 +76,14 @@ export function PdfWidget({ state }: { state: PdfState }) {
 
         {document_ ? (
           <div className="pdf__body">
+            {/* Solo el documento: el espacio entero es para la vista previa (el nombre
+                del fichero sigue en la cabecera). */}
             <img
               className="pdf__thumb"
               src={pageUrl(document_, 1)}
               alt=""
               style={{ aspectRatio: String(document_.aspect) }}
             />
-            <div className="pdf__info">
-              <span className="pdf__hint">Toca para verlo entero</span>
-              <span className="pdf__meta">
-                {document_.pages} página{document_.pages === 1 ? '' : 's'}
-              </span>
-            </div>
           </div>
         ) : (
           <p className="pdf__empty card-empty">{hint ?? 'sin PDF'}</p>
