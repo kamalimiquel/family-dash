@@ -35,7 +35,6 @@ TARJETAS = [
     ("agenda", ".widget--calendar"),
     ("tareas", ".widget--tasks"),
     ("menu", ".widget--pdf"),
-    ("agentes", ".widget--agents"),
     ("titulares", ".news-strip"),
 ]
 
