@@ -14,6 +14,7 @@
   --cm12: calc(12 * var(--cm));
   --cm19: calc(19 * var(--cm));
   --cm22: calc(22 * var(--cm));
+  --cm9: calc(9 * var(--cm));
   --cm10: calc(10 * var(--cm));
 }
 
@@ -1051,13 +1052,13 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.16fr);
-  gap: 3.6cqw;
+  gap: 6.16cqh;
   align-items: center;
 }
 
 .now__label,
 .now__week {
-  font-size: 1.9cqw;
+  font-size: 3.25cqh;
 }
 
 /* --- izquierda: el reloj --- */
@@ -1068,15 +1069,15 @@
 }
 
 .clock__time {
-  font-size: 11.5cqw;
+  font-size: 19.69cqh;
 }
 
 .clock__rule {
-  width: 24cqw;
+  width: 41.09cqh;
 }
 
 .clock__date {
-  font-size: 2.3cqw;
+  font-size: 3.94cqh;
 }
 
 /* --- derecha: el tiempo, con su detalle y la previsión --- */
@@ -1092,53 +1093,53 @@
 }
 
 .widget--now .weather__place {
-  font-size: 3cqw;
+  font-size: 5.14cqh;
 }
 
 .widget--now .weather__refresh {
-  width: 5cqw;
-  height: 5cqw;
+  width: 8.56cqh;
+  height: 8.56cqh;
 }
 
 .widget--now .weather__hero {
-  gap: 2.2cqw;
+  gap: 3.77cqh;
   margin-top: 0;
 }
 
 .widget--now .weather__icon {
-  width: 8.6cqw;
+  width: 14.72cqh;
 }
 
 .widget--now .weather__value {
-  font-size: 10.4cqw;
+  font-size: 17.8cqh;
 }
 
 .widget--now .weather__extreme,
 .widget--now .weather__condition {
-  font-size: 2.2cqw;
+  font-size: 3.48cqh;
 }
 
 .widget--now .weather__details {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9cqh 2cqw;
+  gap: 0.9cqh 3.42cqh;
 }
 
 .widget--now .weather__detail-term,
 .widget--now .weather__detail-value {
-  font-size: 2cqw;
+  font-size: 3.42cqh;
 }
 
 .widget--now .weather__daily {
-  gap: 0.7cqw;
+  gap: 1.2cqh;
 }
 
 .widget--now .weather__day-name,
 .widget--now .weather__day-value {
-  font-size: 1.8cqw;
+  font-size: 3.08cqh;
 }
 
 .widget--now .weather__day-icon {
-  width: 5.6cqw;
+  width: 9.59cqh;
 }
 
 /* Cuatro días de previsión: siete en esta columna se pisaban unos con otros. */
@@ -1148,6 +1149,108 @@
 
 .widget--now .weather__foot {
   display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   La tarjeta desplegada: al tocar, la hora y el tiempo se ensanchan hacia la
+   derecha (ocupan toda la fila de arriba, encima del mapa) y aparece el radar de
+   Meteocat debajo del reloj. La columna de la derecha —temperatura y previsión—
+   se queda como estaba: por eso todo su tamaño va en `cqh` (el alto, 12 cm, no
+   cambia nunca) y aquí solo se mueve lo de la izquierda.
+--------------------------------------------------------------------------- */
+.widget--now--abierto {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  z-index: 5;
+  width: 100%;
+  align-items: stretch;
+  /* Encima de la tarjeta del mapa: sin subir la opacidad, el mapa se transparenta
+     por debajo y no se lee ni el radar ni el tiempo. */
+  background: linear-gradient(155deg, rgba(14, 16, 34, 0.995), rgba(9, 11, 26, 0.99));
+  box-shadow: 0 1.2cqh 4cqh rgba(0, 0, 0, 0.5);
+}
+
+.widget--now--abierto .now__body {
+  grid-template-columns: minmax(0, 1fr) var(--cm9);
+  gap: 2.4cqh;
+  width: 100%;
+  align-items: stretch;
+}
+
+.now__izq {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 1.23cqh;
+}
+
+/* El reloj deja sitio al radar: sigue arriba, pero más recogido. */
+.widget--now--abierto .clock__time {
+  font-size: 12.5cqh;
+}
+
+.widget--now--abierto .clock__rule {
+  width: 26cqh;
+}
+
+.widget--now--abierto .clock__date {
+  font-size: 3.1cqh;
+}
+
+/* --- el radar de Meteocat --- */
+.radar {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: rgba(8, 10, 24, 0.55);
+}
+
+.radar__map {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Leaflet pinta su contenedor de gris claro; aquí manda el fondo oscuro del radar. */
+  background: transparent;
+}
+
+/* Las teselas de Meteocat son claras: se gira a oscuro **solo el fondo** (va en su
+   propio pane). Si se girara toda la capa, el azul de la lluvia saldría naranja. */
+.radar__fondo {
+  filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(0.95);
+}
+
+.radar__map .leaflet-control-attribution {
+  background: rgba(6, 8, 20, 0.6);
+  color: var(--ink-faint);
+  font-size: 1.1cqh;
+}
+
+.radar__map .leaflet-control-attribution a {
+  color: inherit;
+}
+
+.radar__pie,
+.radar__aviso {
+  position: absolute;
+  z-index: 800;
+  margin: 0;
+  padding: 0.3cqh 0.8cqh;
+  border-radius: 0.4rem;
+  background: rgba(6, 8, 20, 0.62);
+  font-size: 2.1cqh;
+}
+
+.radar__pie {
+  inset: auto auto 0.9cqh 1.1cqh;
+  color: var(--ink-faint);
+}
+
+.radar__aviso {
+  inset: 1cqh auto auto 1.1cqh;
+  color: #ffd08a;
 }
 
 /* El mapa, arriba a la derecha (13 × 12 cm: lo que sobra de la fila después de

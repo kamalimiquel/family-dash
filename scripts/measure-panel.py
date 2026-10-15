@@ -72,6 +72,39 @@ VISOR = """(() => {
   return visor ? { abierto: true, fichero: (visor.querySelector('.viewer__name') || {}).textContent } : { abierto: false };
 })()"""
 
+TOQUE_TIEMPO = TOQUE.replace(".widget--pdf", ".widget--now")
+
+# El desplegable del tiempo: la tarjeta se ensancha, el reloj se queda arriba, debajo sale
+# el radar y la columna de la derecha (temperatura y previsión) no debe cambiar de tamaño.
+DESPLEGADO = """(() => {
+  const caja = (sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)];
+  };
+  const tamano = (sel, prop) => {
+    const el = document.querySelector(sel);
+    return el ? getComputedStyle(el)[prop] : null;
+  };
+  const teselas = Array.from(document.querySelectorAll('.radar__map img.leaflet-tile'));
+  const tarjeta = document.querySelector('.widget--now');
+  return {
+    desplegada: !!tarjeta && tarjeta.classList.contains('widget--now--abierto'),
+    tarjeta: caja('.widget--now'),
+    reloj: caja('.widget--now .clock'),
+    radar: caja('.radar'),
+    clima: caja('.widget--now .weather'),
+    lugar: tamano('.widget--now .weather__place', 'fontSize'),
+    valor: tamano('.widget--now .weather__value', 'fontSize'),
+    hora: tamano('.widget--now .clock__time', 'fontSize'),
+    teselas: teselas.length,
+    cargadas: teselas.filter((t) => t.naturalWidth > 0).length,
+    pie: (document.querySelector('.radar__pie') || {}).textContent || null,
+    aviso: (document.querySelector('.radar__aviso') || {}).textContent || null,
+  };
+})()"""
+
 
 class Navegador:
     def __init__(self, puerto: int = 9222):
@@ -99,6 +132,11 @@ def main() -> int:
     parser.add_argument("--size", default="1080x1920", help="ancho x alto en píxeles")
     parser.add_argument("--espera", type=float, default=8, help="segundos antes de medir")
     parser.add_argument("--tap", action="store_true", help="prueba un toque real en la tarjeta del PDF")
+    parser.add_argument(
+        "--tap-tiempo",
+        action="store_true",
+        help="toca la tarjeta de la hora y el tiempo y comprueba el desplegable del radar",
+    )
     parser.add_argument("--out", default="/tmp/panel.png")
     args = parser.parse_args()
 
@@ -126,6 +164,20 @@ def main() -> int:
     print(f"  tarjetas de noticias: {cajas['tarjetasNoticias']}")
     print(f"  vídeo de fondo:    {cajas['video']}")
 
+    tamano_antes = navegador.evaluar(
+        """(() => {
+      const tamano = (sel, prop) => {
+        const el = document.querySelector(sel);
+        return el ? getComputedStyle(el)[prop] : null;
+      };
+      return {
+        lugar: tamano('.widget--now .weather__place', 'fontSize'),
+        valor: tamano('.widget--now .weather__value', 'fontSize'),
+        hora: tamano('.widget--now .clock__time', 'fontSize'),
+      };
+    })()"""
+    )
+
     if args.tap:
         centro = navegador.evaluar(TOQUE)
         if not centro:
@@ -146,6 +198,45 @@ def main() -> int:
                 time.sleep(0.12)
             time.sleep(1.5)
             print(f"  toque en el PDF:   {navegador.evaluar(VISOR)}")
+
+    if args.tap_tiempo:
+        centro = navegador.evaluar(TOQUE_TIEMPO)
+        if not centro:
+            print("  no hay tarjeta de la hora y el tiempo que tocar")
+        else:
+            for tipo in ("mousePressed", "mouseReleased"):
+                navegador.llamar(
+                    "Input.dispatchMouseEvent",
+                    {
+                        "type": tipo,
+                        "x": centro["x"],
+                        "y": centro["y"],
+                        "button": "left",
+                        "clickCount": 1,
+                        "buttons": 1 if tipo == "mousePressed" else 0,
+                    },
+                )
+                time.sleep(0.12)
+            time.sleep(6)
+            datos = navegador.evaluar(DESPLEGADO) or {}
+            print("== el desplegable del tiempo ==")
+            print(f"  desplegada:        {datos.get('desplegada')}")
+            print(f"  tarjeta:           {datos.get('tarjeta')} (debe ocupar la fila entera)")
+            print(f"  reloj:             {datos.get('reloj')}")
+            print(f"  radar:             {datos.get('radar')} (debajo del reloj)")
+            print(f"  teselas del radar: {datos.get('cargadas')}/{datos.get('teselas')} cargadas")
+            print(f"  pie del radar:     {datos.get('pie') or datos.get('aviso')}")
+            reloj, radar = datos.get("reloj"), datos.get("radar")
+            if reloj and radar:
+                print(f"  reloj encima:      {reloj[1] + reloj[3] <= radar[1]} (el reloj acaba donde empieza el radar)")
+            # La columna de la derecha no se debe mover; el reloj sí (deja sitio al radar).
+            print("  el tiempo, de tamaño (debe ser igual que en reposo):")
+            for clave, sello in (("lugar", "weather__place"), ("valor", "weather__value")):
+                antes, despues = tamano_antes[clave], datos.get(clave)
+                igual = "igual" if antes == despues else f"¡CAMBIÓ! (antes {antes})"
+                print(f"    {sello:16} {despues}  {igual}")
+            antes, despues = tamano_antes["hora"], datos.get("hora")
+            print(f"    {'clock__time':16} {despues}  (en reposo {antes}: el reloj se recoge a propósito)")
 
     captura = navegador.llamar("Page.captureScreenshot", {"format": "png"})
     with open(args.out, "wb") as fichero:

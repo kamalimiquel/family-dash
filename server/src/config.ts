@@ -22,6 +22,20 @@ export const DATA_DIR = path.dirname(DB_PATH)
 /** Cuánto vale una respuesta de Open-Meteo antes de volver a pedirla. */
 export const WEATHER_TTL_MS = Number(process.env.WEATHER_TTL_MS ?? 15 * 60 * 1000)
 
+/**
+ * El radar de precipitación (Meteocat). La imagen se regenera cada 6 minutos, así
+ * que con 5 de caché va sobrado. La vista es Cataluña entera: el radar es autonómico
+ * y lo que se quiere ver de un vistazo es si llueve aquí.
+ */
+export const RADAR_TTL_MS = Number(process.env.RADAR_TTL_MS ?? 5 * 60 * 1000)
+
+export const RADAR_VIEW = {
+  south: 40.4,
+  west: 0.05,
+  north: 42.95,
+  east: 3.45,
+}
+
 /** Cuántos días de calendario se piden. */
 export const CALENDAR_DAYS = Number(process.env.CALENDAR_DAYS ?? 7)
 

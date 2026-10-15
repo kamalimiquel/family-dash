@@ -361,6 +361,45 @@ hace malabares en la alfombra), no dormido. Para eso está el vigía: late cada 
 proceso viva. Se vigila **la aplicación** (el escritorio o su servidor local), nunca el *gateway*,
 que es un servicio que vive siempre y dejaría al robot despierto para siempre.
 
+
+### Fase 11 — el radar de Meteocat, al desplegar la tarjeta del tiempo ✅
+
+La tarjeta de la hora y el tiempo **se despliega al tocarla**: se ensancha hacia la derecha
+hasta ocupar toda la fila de arriba (los 32,9 cm que suman la tarjeta y el mapa, que queda
+tapado), el reloj se queda **arriba** y debajo aparece el **radar de precipitación con
+Cataluña encuadrada**. La columna de la derecha —temperatura, detalle y previsión— **no se
+mueve ni cambia de tamaño**: se cierra tocando otra vez la tarjeta, tocando fuera o con
+Escape, y el radar se pide **solo mientras está desplegada**.
+
+El radar es el de **Meteocat** (el Servei Meteorològic de Catalunya). No tiene API pública,
+pero su propio giny (`static-m.meteo.cat/ginys/mapaRadar`) se apoya en dos cosas abiertas
+que aquí se reutilizan: un fichero con la hora de la última imagen
+(`referencia/tiles/dates-tiles-CAPPI_0m.json`) y las **teselas** del radar. Sin claves y sin
+facturas; a cambio se cachea 5 minutos y se les acredita en pantalla.
+
+Tres detalles que costaron su rato y conviene no volver a descubrir:
+
+- **Las teselas no van con el patrón normal**: la ruta lleva el relleno a mano
+  (`{z:02}/000/000/{x:03}/000/000/{y:03}.png`) y la `y` **invertida** (TMS). Como la
+  dirección se compone en el cliente, `tms: true` de Leaflet no basta: hay que darle la
+  vuelta a mano.
+- **El radar se publica a un único zoom (7)** y en un rectángulo fijo (teselas x 62-67,
+  y 78-83): por debajo se encogen sus teselas y por encima se estiran (`minNativeZoom` /
+  `maxNativeZoom`), para no pedir zooms que no existen y comerse 404.
+- **El fondo es de OpenStreetMap**, no el de Meteocat: sus teselas de mar son de un gris
+  plano que, girado a oscuro como el resto del panel, deja un parche feo al este. El fondo
+  va en su propio *pane* con el filtro (y con `z-index` explícito, porque el pane se crea el
+  último y si no tapa al radar).
+
+La tarjeta desplegada se pone casi opaca: encima del mapa, con el cristal translúcido de
+siempre, se transparentaba el mapa de debajo y no se leía ni el radar ni el tiempo.
+
+Para que todo lo del tiempo siga igual de grande en las dos posturas de la tarjeta (19 cm
+en reposo, 32,9 cm desplegada) sus medidas pasaron de `cqw` a `cqh`: el **alto** es 12 cm
+siempre, así que el ancho deja de importar. Ojo con una trampa de las unidades de
+contenedor: un elemento **no** ve su propio contenedor, así que el `padding` de la tarjeta
+—que sí es cosa suya— sigue en `cqw` (que resuelve contra la ventana, constante).
+
 ---
 
 ## Estructura
@@ -438,6 +477,7 @@ Family_dash/
     │   ├── NowWidget.tsx       # tarjeta 1: la hora, la fecha y el tiempo juntos
     │   ├── ClockWidget.tsx     #   · el reloj (bloque, sin tarjeta propia)
     │   ├── WeatherWidget.tsx   #   · el tiempo de la localidad (bloque)
+    │   ├── WeatherRadar.tsx    #   · el radar de Meteocat (con la tarjeta desplegada)
     │   ├── TasksWidget.tsx     # tarjeta 2: tareas pendientes
     │   ├── CalendarWidget.tsx  # tarjeta 3: próximos eventos del calendario
     │   ├── PdfWidget.tsx       # tarjeta 4: el PDF y su visor a pantalla completa
@@ -469,6 +509,7 @@ Family_dash/
 |--------|------|----------|
 | GET | `/api/health` | Estado, versión de Node, ruta de la BD y nº de entradas en caché |
 | GET | `/api/weather` | Tiempo actual + previsión. `?refresh=1` fuerza ir a la red |
+| GET | `/api/radar` | La última imagen del radar de Meteocat: la hora y el prefijo de sus teselas, más el rectángulo que hay que encuadrar. Si Meteocat no contesta, responde 200 con `reason` (el mapa sale igual) |
 | GET | `/api/settings` | Localidad, fuentes de noticias, origen del PDF y agenda configurados (y los de por defecto) |
 | PUT | `/api/settings` | Cambia la localidad, las fuentes, el PDF, la agenda y/o dónde está casa (ver ejemplos abajo) |
 | GET | `/api/calendar` | Próximos eventos del calendario configurado, agrupables por día (`?days=7`, `?refresh=1`) |
@@ -832,7 +873,9 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 | 7 | Fondo animado y reparto en centímetros | ✅ |
 | 8 | Fondo de vídeo y medidas nuevas | ✅ |
 | 9 | Mapa de la familia (con las cookies de Google Maps) | ✅ |
-| 10 | Navegación táctil entre pantallas | pendiente |
+| 10 | El cuarto de los agentes (el estado de Hermes) | ✅ |
+| 11 | El radar de Meteocat, al desplegar la tarjeta del tiempo | ✅ |
+| 12 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:
 
@@ -850,6 +893,9 @@ Notas de arquitectura para lo que viene:
 
 ## Créditos
 
-Meteo: [Open-Meteo](https://open-meteo.com) (uso no comercial, sin API key). El fondo
+Meteo: [Open-Meteo](https://open-meteo.com) (uso no comercial, sin API key). El **radar** de
+precipitación y las teselas del giny del radar son del [Meteocat](https://www.meteo.cat)
+(Servei Meteorològic de Catalunya); el fondo del radar, de
+[OpenStreetMap](https://www.openstreetmap.org). El fondo
 es degradado y olas hechos con CSS y SVG, así que no hay ninguna imagen de terceros
 que acreditar.

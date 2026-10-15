@@ -31,6 +31,9 @@ export const LOCATIONS_REFRESH_MS = 2 * 60 * 1000
    embed de Google solo sabe marcar un punto. Con Leaflet se enseñan casa y todos a
    la vez, encuadrados para que quepan, así que ya no hay nada que rotar. */
 
+/** Cada cuánto se le vuelve a preguntar al backend por el radar (Meteocat lo rehace cada 6 min). */
+export const RADAR_REFRESH_MS = 5 * 60 * 1000
+
 /** Cada cuánto se vuelve a mirar si ha cambiado el PDF de la carpeta compartida. */
 export const PDF_REFRESH_MS = 5 * 60 * 1000
 

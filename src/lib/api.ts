@@ -3,6 +3,7 @@ import type {
   LocationsResponse,
   NewsResponse,
   PdfResponse,
+  RadarFrame,
   TasksResponse,
   WeatherSnapshot,
 } from './types'
@@ -48,6 +49,10 @@ export function fetchCalendar(days: number, signal?: AbortSignal): Promise<Calen
 
 export function fetchTasks(signal?: AbortSignal): Promise<TasksResponse> {
   return getJson<TasksResponse>('/api/tasks', signal)
+}
+
+export function fetchRadar(signal?: AbortSignal): Promise<RadarFrame> {
+  return getJson<RadarFrame>('/api/radar', signal)
 }
 
 export function fetchNews(signal?: AbortSignal): Promise<NewsResponse> {

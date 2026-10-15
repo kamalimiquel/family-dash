@@ -196,6 +196,22 @@ export interface LocationsResponse {
   meta: CacheMeta | null
 }
 
+/* --- el radar de Meteocat (desplegable del tiempo) ---------------------- */
+
+export interface RadarFrame {
+  /** ISO 8601 de la imagen de radar. */
+  imageAt: string | null
+  /** Prefijo de las teselas del radar: el navegador añade /{z}/000/000/{x}/000/000/{y}.png */
+  tiles: { radar: string } | null
+  /** Trozos de la ruta de las teselas (año, mes, día, hora, minuto). */
+  path: { year: string; month: string; day: string; hour: string; minute: string } | null
+  /** Rectángulo que se enseña (Cataluña). */
+  view: { south: number; west: number; north: number; east: number }
+  credit: string
+  reason: AgendaReason | null
+  meta: CacheMeta | null
+}
+
 /* --- los agentes de Hermes (el cuarto) ---------------------------------- */
 
 export type AgentState = 'working' | 'waiting' | 'sleeping'
