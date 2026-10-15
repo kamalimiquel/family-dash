@@ -124,6 +124,9 @@ export function MapWidget({ state }: { state: LocationsState }) {
   }, [people, home])
 
   const motivo = state.error ?? state.data?.reason?.message ?? 'Todavía no hay ubicaciones que enseñar.'
+  // `stale` = Google no ha contestado y esto es lo último que se supo. Sin el aviso,
+  // unas posiciones congeladas parecen un fallo del panel (o peor: una posición falsa).
+  const caducado = Boolean(state.data?.meta?.stale)
 
   return (
     <section className="widget widget--map" aria-label="Dónde está la familia">
@@ -158,11 +161,13 @@ export function MapWidget({ state }: { state: LocationsState }) {
         <p className="map__empty">{state.loading ? 'Buscando…' : motivo}</p>
       )}
 
-      <footer className="map__foot">
+      <footer className={`map__foot${caducado ? ' map__foot--warn' : ''}`}>
         <span className="map__hint">
-          {home
-            ? 'Ubicaciones compartidas en Google Maps · distancia en línea recta desde casa'
-            : 'Ubicaciones compartidas en Google Maps · falta configurar dónde está casa'}
+          {caducado
+            ? 'Sin conexión con Google Maps: es la última posición que se supo'
+            : home
+              ? 'Ubicaciones compartidas en Google Maps · distancia en línea recta desde casa'
+              : 'Ubicaciones compartidas en Google Maps · falta configurar dónde está casa'}
         </span>
       </footer>
     </section>

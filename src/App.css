@@ -1302,6 +1302,11 @@
   font-size: 2.2cqw;
 }
 
+/* Mismo ámbar que el resto de pies cuando el dato viene de la caché. */
+.map__foot--warn .map__hint {
+  color: #ffd08a;
+}
+
 /* El cuarto de los agentes, a la derecha del menú. El canvas se enseña a 1:1 (320
    px de ancho, los mismos que tiene el cuarto) para que el pixel-art no se
    deforme: con `image-rendering: pixelated` y sin reescalado, cada píxel del dibujo
