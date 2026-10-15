@@ -414,6 +414,30 @@ siempre, así que el ancho deja de importar. Ojo con una trampa de las unidades 
 contenedor: un elemento **no** ve su propio contenedor, así que el `padding` de la tarjeta
 —que sí es cosa suya— sigue en `cqw` (que resuelve contra la ventana, constante).
 
+
+### Fase 12 — el reparto en tres columnas ✅
+
+El panel queda en **tres columnas**: la de la izquierda (12 cm) es la agenda y el menú, la
+del medio (lo que sobre, unos 6,5 cm de ancho) se queda **libre** y la de la derecha
+(13,2 cm) es el mapa, las tareas y los agentes. La tarjeta de la hora y el tiempo mide
+19 cm, que son justo las dos primeras columnas.
+
+| Zona | Medida | px |
+|------|--------|----|
+| Hora y tiempo (columnas 1-2) | 19 × 12 cm | 610 × 385 |
+| Mapa (columna 3) | 13,2 × 12 cm | 424 × 385 |
+| Agenda (columna 1) | 12 × 22 cm | 385 × 707 |
+| Tareas (columna 3, pegada arriba) | 13,2 × 12 cm | 424 × 385 |
+| Menú (columna 1) | 12 × 10 cm | 385 × 321 |
+| Agentes (columna 3, pegada arriba) | 13,2 × 12 cm | 424 × 385 |
+| Titulares | lo que queda | 1050 × 367 |
+
+Cuadra sin trucos: 12 + 6,6 + 13,2 = 31,8 cm, más los huecos, son los 32,6 cm útiles de la
+pantalla. La franja del medio queda vacía a propósito (ahí se ve el fondo), y la agenda y el
+menú —que ahora son **la mitad de anchos** que antes— llevan una **consulta de contenedor**
+que agranda su letra por 20,2/12 = 1,68: sus medidas están en `cqw` (contra el ancho de la
+propia tarjeta), así que a 12 cm la letra se habría quedado en 8 px, ilegible desde el sofá.
+
 ---
 
 ## Estructura
@@ -889,7 +913,8 @@ curl -sI http://127.0.0.1:4173/ | grep -i cache-control  # no-store en el HTML
 | 9 | Mapa de la familia (con las cookies de Google Maps) | ✅ |
 | 10 | El cuarto de los agentes (el estado de Hermes) | ✅ |
 | 11 | El radar de Meteocat, al desplegar la tarjeta del tiempo | ✅ |
-| 12 | Navegación táctil entre pantallas | pendiente |
+| 12 | El reparto en tres columnas (agenda y menú de 12 cm) | ✅ |
+| 13 | Navegación táctil entre pantallas | pendiente |
 
 Notas de arquitectura para lo que viene:
 

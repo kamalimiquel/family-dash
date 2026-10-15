@@ -12,6 +12,8 @@
 :root {
   --cm: 32.12px;
   --cm12: calc(12 * var(--cm));
+  /* 13,2 cm: el ancho del mapa, y el de las tarjetas de la columna de la derecha. */
+  --cm132: calc(13.2 * var(--cm));
   --cm19: calc(19 * var(--cm));
   --cm22: calc(22 * var(--cm));
   --cm9: calc(9 * var(--cm));
@@ -22,12 +24,15 @@
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: var(--cm19) minmax(0, 1fr) var(--cm12);
-  grid-template-rows: var(--cm12) var(--cm22) var(--cm10) minmax(0, 1fr);
+  /* Tres columnas: la de la izquierda (12 cm) es la agenda y el menú, la del medio
+     (lo que sobre) queda libre y la de la derecha (13,2 cm) es el mapa, las tareas y
+     los agentes. La tarjeta del tiempo mide 19 cm, justo las dos primeras columnas. */
+  grid-template-columns: var(--cm12) minmax(0, 1fr) var(--cm132);
+  grid-template-rows: var(--cm12) var(--cm22) var(--cm12) minmax(0, 1fr);
   grid-template-areas:
-    'now map map'
-    'calendar calendar tasks'
-    'menu menu agents'
+    'now now map'
+    'calendar . tasks'
+    'menu . agents'
     'news news news';
   align-content: start;
   gap: clamp(0.5rem, 1.4vmin, 1rem);
@@ -1619,6 +1624,14 @@
   font-size: 4.4cqw;
 }
 
+/* Tareas y agentes miden lo mismo que el mapa (13,2 x 12 cm) y van pegadas arriba:
+   la agenda y el menú miden 22 y 10 cm de alto, así que su fila es más alta. */
+.widget--tasks,
+.widget--agents {
+  height: var(--cm12);
+  align-self: start;
+}
+
 /* El menú: el ancho del calendario y 10 cm de alto. */
 .widget--pdf {
   container-type: size;
@@ -1646,6 +1659,64 @@
 
 .pdf__meta {
   font-size: 2.6cqw;
+}
+
+
+/* ---------------------------------------------------------------------------
+   Agenda y menú con 12 cm de ancho (antes tenían 20,2): como sus medidas van en
+   `cqw` —o sea, contra el ancho de la propia tarjeta— la letra se quedaría en 8 px.
+   Aquí se agrandan por 20,2/12 = 1,68 para que se lean igual de bien que antes.
+--------------------------------------------------------------------------- */
+@container (max-width: 520px) {
+  .widget--calendar .calendar__title {
+    font-size: 7.4cqw;
+  }
+
+  .widget--calendar .calendar__account,
+  .widget--calendar .calendar__hint {
+    font-size: 3.2cqw;
+  }
+
+  .widget--calendar .calendar__day {
+    font-size: 3.4cqw;
+  }
+
+  .widget--calendar .calendar__what {
+    font-size: 3.7cqw;
+  }
+
+  .widget--calendar .calendar__time {
+    width: 18.5cqw;
+    font-size: 3.4cqw;
+  }
+
+  .widget--calendar .calendar__where {
+    font-size: 3.1cqw;
+  }
+
+  .widget--calendar .calendar__more,
+  .widget--calendar .calendar__empty {
+    font-size: 3.2cqw;
+  }
+
+  .widget--calendar .calendar__foot,
+  .widget--calendar .calendar__status,
+  .widget--calendar .calendar__counts {
+    font-size: 2.95cqw;
+  }
+
+  .pdf__title {
+    font-size: 6.1cqw;
+  }
+
+  .pdf__file,
+  .pdf__meta {
+    font-size: 4.4cqw;
+  }
+
+  .pdf__hint {
+    font-size: 5.4cqw;
+  }
 }
 
 /* Los titulares se reparten lo que queda: con 12 + 22 + 10 cm por delante les
