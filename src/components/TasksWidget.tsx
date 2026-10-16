@@ -14,9 +14,19 @@ const REASON_TEXT: Record<string, string> = {
 const plural = (count: number, one: string, many: string): string =>
   `${count} ${count === 1 ? one : many}`
 
-/** Widget 4: las tareas pendientes de Google Tasks. */
+/**
+ * Widget 4: las tareas pendientes de Google Tasks.
+ *
+ * Cada tarea lleva delante un círculo: pulsándolo se marca **como hecha en Google** y
+ * desaparece de la lista (las hechas no se piden al leer, así que no vuelven a salir). No
+ * se borra nada: la tarea queda en la cuenta, completada, y se puede recuperar desde
+ * Google Tasks o desde el móvil.
+ *
+ * Si Google no acepta el cambio —por ejemplo, si la cuenta está autorizada solo para
+ * leer— la tarea vuelve a su sitio y la tarjeta lo dice.
+ */
 export function TasksWidget({ state }: { state: AgendaState }) {
-  const { tasks, reason, loading, error, receivedAt } = state
+  const { tasks, reason, loading, error, receivedAt, completeTask } = state
 
   const visible = tasks.slice(0, MAX_TASKS)
   const hidden = Math.max(tasks.length - MAX_TASKS, 0)
@@ -52,7 +62,12 @@ export function TasksWidget({ state }: { state: AgendaState }) {
             const due = formatDueLabel(task.due)
             return (
               <li className="tasks__item" key={task.id}>
-                <span className="tasks__bullet" aria-hidden="true" />
+                <button
+                  type="button"
+                  className="tasks__bullet"
+                  onClick={() => completeTask(task)}
+                  aria-label={`Marcar como hecha: ${task.title}`}
+                />
                 <span className="tasks__title">{task.title}</span>
                 {due && (
                   <span className="tasks__due" data-late={due === 'vencida' ? 'true' : undefined}>

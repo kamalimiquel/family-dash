@@ -105,6 +105,8 @@ export interface TaskItem {
   title: string
   due: string | null
   list: string
+  /** Id de la lista en Google: hace falta para marcarla como hecha. */
+  listId: string
   notes: string | null
 }
 

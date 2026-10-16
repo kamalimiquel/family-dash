@@ -24,15 +24,20 @@ function localIso(date: Date): string {
 const dayIso = (date: Date): string =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 
-function dayAt(offsetDays: number, hour = 0, minute = 0): Date {
-  const date = new Date()
+function dayAt(offsetDays: number, hour = 0, minute = 0, desde?: Date): Date {
+  const date = desde ? new Date(desde) : new Date()
   date.setDate(date.getDate() + offsetDays)
   date.setHours(hour, minute, 0, 0)
   return date
 }
 
-export function mockEvents(_days = 7): CalendarEvent[] {
-  const allDayTomorrow = dayAt(1)
+/**
+ * Eventos de ejemplo. Con `from` (`YYYY-MM-DD`) se desplazan a esa semana, para que pasar
+ * de semana con el dedo también se note en el simulador (y en las capturas del repo).
+ */
+export function mockEvents(_days = 7, from?: string): CalendarEvent[] {
+  const base = from ? new Date(`${from}T00:00:00`) : undefined
+  const allDayTomorrow = dayAt(1, 0, 0, base)
 
   const timed = (
     offsetDays: number,
@@ -43,8 +48,8 @@ export function mockEvents(_days = 7): CalendarEvent[] {
     title: string,
     location: string | null = null,
   ): CalendarEvent => {
-    const start = dayAt(offsetDays, startHour, startMinute)
-    const end = dayAt(offsetDays, endHour, endMinute)
+    const start = dayAt(offsetDays, startHour, startMinute, base)
+    const end = dayAt(offsetDays, endHour, endMinute, base)
     return {
       id: `mock-${offsetDays}-${startHour}-${title}`,
       title,
@@ -76,12 +81,21 @@ export function mockEvents(_days = 7): CalendarEvent[] {
   ]
 }
 
+/** Las tareas que se han marcado como hechas en el simulador. Vive solo en memoria. */
+const hechasEnElSimulador = new Set<string>()
+
 export function mockTasks(): TasksResult {
   const tasks: TaskItem[] = [
-    { id: 'mock-t1', title: 'Comprar pan y leche', due: dayIso(dayAt(0)), list: 'Casa', notes: null },
-    { id: 'mock-t2', title: 'Pagar la luz', due: dayIso(dayAt(1)), list: 'Casa', notes: null },
-    { id: 'mock-t3', title: 'Firmar la autorización del colegio', due: dayIso(dayAt(2)), list: 'Familia', notes: null },
-    { id: 'mock-t4', title: 'Reservar la revisión del coche', due: null, list: 'Casa', notes: null },
+    { id: 'mock-t1', title: 'Comprar pan y leche', due: dayIso(dayAt(0)), list: 'Casa', listId: 'mock-casa', notes: null },
+    { id: 'mock-t2', title: 'Pagar la luz', due: dayIso(dayAt(1)), list: 'Casa', listId: 'mock-casa', notes: null },
+    { id: 'mock-t3', title: 'Firmar la autorización del colegio', due: dayIso(dayAt(2)), list: 'Familia', listId: 'mock-familia', notes: null },
+    { id: 'mock-t4', title: 'Reservar la revisión del coche', due: null, list: 'Casa', listId: 'mock-casa', notes: null },
   ]
-  return { tasks, lists: ['Casa', 'Familia'] }
+  // Al marcar una como hecha desaparece de la lista, igual que pasa con las de verdad
+  // (que se piden con `showCompleted=false`).
+  return { tasks: tasks.filter((task) => !hechasEnElSimulador.has(task.id)), lists: ['Casa', 'Familia'] }
+}
+
+export function mockComplete(_listId: string, taskId: string): void {
+  hechasEnElSimulador.add(taskId)
 }

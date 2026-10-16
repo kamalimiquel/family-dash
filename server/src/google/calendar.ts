@@ -50,6 +50,8 @@ export interface FetchEventsOptions {
   calendarName?: string
   /** Cuántas horas hacia atrás se miran, para ver lo que está en curso. */
   lookBackHours?: number
+  /** Día desde el que se pide (`YYYY-MM-DD`). Sin él, lo que empieza ahora mismo. */
+  from?: string
 }
 
 interface GoogleCalendarList {
@@ -108,16 +110,18 @@ export function normalizeEvent(event: GoogleEvent, calendar: string | null): Cal
 
 /** Próximos eventos, ordenados por hora de inicio. */
 export async function fetchEvents(db: Db, options: FetchEventsOptions = {}): Promise<CalendarEvent[]> {
-  const { days = 7, max = 60, calendarId, calendarName, lookBackHours = 2 } = options
+  const { days = 7, max = 60, calendarId, calendarName, lookBackHours = 2, from } = options
 
-  if (isMock()) return mockEvents(days)
+  if (isMock()) return mockEvents(days, from)
 
   // Un id explícito manda; si no, el nombre configurado; si no, el principal.
   const target = calendarId ?? (await resolveCalendarId(db, calendarName))
 
+  // Con `from` se enseña la semana que se pida (la agenda se pasa con el dedo); sin él,
+  // lo que empieza ahora mismo (con las horas de margen para ver lo que está en curso).
   const now = new Date()
-  const timeMin = new Date(now.getTime() - lookBackHours * 3_600_000)
-  const timeMax = new Date(now.getTime() + days * 86_400_000)
+  const timeMin = from ? new Date(`${from}T00:00:00`) : new Date(now.getTime() - lookBackHours * 3_600_000)
+  const timeMax = new Date(timeMin.getTime() + days * 86_400_000)
 
   const url = new URL(`${CALENDAR_API}/calendars/${encodeURIComponent(target)}/events`)
   url.searchParams.set('timeMin', timeMin.toISOString())

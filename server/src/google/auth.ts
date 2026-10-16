@@ -18,7 +18,10 @@ const REVOKE_ENDPOINT = 'https://oauth2.googleapis.com/revoke'
 /** Mínimo imprescindible: leer calendario, leer tareas y saber qué cuenta es. */
 export const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
-  'https://www.googleapis.com/auth/tasks.readonly',
+  // Antes era `tasks.readonly`. Para marcar una tarea como hecha desde el panel hace
+  // falta el permiso entero; y cambiar el permiso obliga a volver a autorizar la cuenta,
+  // porque Google no amplía un consentimiento ya dado.
+  'https://www.googleapis.com/auth/tasks',
   'https://www.googleapis.com/auth/userinfo.email',
 ]
 

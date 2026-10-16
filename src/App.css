@@ -2067,3 +2067,60 @@
   cursor: none;
   transition: opacity 1800ms ease;
 }
+
+
+/* ---------------------------------------------------------------------------
+   Marcar una tarea como hecha.
+
+   El círculo es un botón, y por eso tiene tamaño de dedo y no de adorno: al pulsarlo se
+   marca la tarea como hecha **en Google** y desaparece de la lista. El panel no la borra:
+   la tarea sigue en la cuenta (completada) y se puede recuperar desde Google Tasks. Lo que
+   hace que no vuelva a salir es que al leer solo se piden las pendientes.
+   --------------------------------------------------------------------------- */
+.widget--tasks .tasks__bullet {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 2px solid var(--ink-faint);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.widget--tasks .tasks__bullet:hover,
+.widget--tasks .tasks__bullet:focus-visible {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  outline: none;
+}
+
+.widget--tasks .tasks__bullet:active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* La semana que se está viendo, cuando no es la de hoy, y el botón para volver. */
+.calendar__week {
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.calendar__today {
+  padding: 0.15em 0.7em;
+  font-size: var(--t-meta);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* El gesto horizontal de la agenda es nuestro; el desplazamiento de dentro (vertical) se
+   lo sigue quedando el navegador. */
+.widget--calendar {
+  touch-action: pan-y;
+}
