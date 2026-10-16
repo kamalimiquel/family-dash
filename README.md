@@ -796,7 +796,12 @@ nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas rea
   06:00. El Pi arranca solo cuando le llega la corriente y el panel se levanta entero, que
   el servidor, el kiosco y todo lo demás ya están en unidades con *linger* y en el
   autostart. El apagado limpio de las 22:00 es lo que garantiza que ese corte no se lleve
-  ninguna escritura a medias.
+  ninguna escritura a medias. Dos detalles que se olvidan: el temporizador tiene que **cortar
+  de verdad** la corriente —solo entonces el Pi arranca al devolverla— y los digitales baratos
+  **pierden su programa con un apagón**, así que conviene comprobarlos después de cualquier
+  corte largo. Desde que llega la corriente hasta que se ve el panel pasan unos **25-35 s**:
+  25,4 s de arranque (medidos) y el kiosco unos segundos después, en cuanto entra el
+  escritorio.
 - **Wake-on-LAN desde una máquina que no se apague nunca** (sin comprar nada): la del NAS,
   por ejemplo, con una tarea programada a las 06:00 que mande el paquete mágico a la Pi
   (`scripts/despierta.py <mac> <difusión>`, que no necesita más que Python 3).
