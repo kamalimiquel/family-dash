@@ -798,10 +798,17 @@ nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas rea
   autostart. El apagado limpio de las 22:00 es lo que garantiza que ese corte no se lleve
   ninguna escritura a medias.
 - **Wake-on-LAN desde una máquina que no se apague nunca** (sin comprar nada): la del NAS,
-  por ejemplo, con una tarea programada a las 06:00 que mande el paquete mágico a la Pi.
-  Antes hay que dejar la tarjeta de red del Pi a la escucha (`ethtool -s eth0 wol g`, o su
-  equivalente en NetworkManager) y **probarlo**: si el paquete no la despierta, la pantalla
-  se queda apagada hasta que alguien le devuelva la corriente a mano.
+  por ejemplo, con una tarea programada a las 06:00 que mande el paquete mágico a la Pi
+  (`scripts/despierta.py <mac> <difusión>`, que no necesita más que Python 3).
+  **Solo funciona por cable**: por WiFi no hay manera, porque apagada la tarjeta inalámbrica
+  no existe para nadie. Hacen falta tres cosas: el cable enchufado, la tarjeta del Pi a la
+  escucha (`nmcli connection modify <conexión> 802-3-ethernet.wake-on-lan magic`) y que el
+  EEPROM no corte la alimentación al apagar (`POWER_OFF_ON_HALT=0`, que es lo que trae de
+  fábrica; se comprueba con `rpi-eeprom-config` sin ser root). Y **probarlo**: si el paquete
+  no la despierta, la pantalla se queda apagada hasta que alguien le devuelva la corriente a
+  mano. Ojo al pasar a cable: `eth0` va por DHCP y su ruta tiene más prioridad que la del
+  WiFi, así que **la dirección del panel puede cambiar** — conviene reservarla en el router
+  por la MAC de la tarjeta de cable.
 
 ### Conectar la cuenta de Google (una sola vez)
 
