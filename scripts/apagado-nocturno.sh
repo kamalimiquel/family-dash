@@ -71,11 +71,21 @@ systemctl --user daemon-reload
 systemctl --user enable --now "${NOMBRE}.timer"
 
 echo -n "Permiso para apagar sin contraseña: "
-if command -v busctl >/dev/null; then
-    busctl call org.freedesktop.login1 /org/freedesktop/login1 \
-        org.freedesktop.login1.Manager CanPowerOff | sed 's/^s //' || true
+if command -v systemd-run >/dev/null && command -v busctl >/dev/null; then
+    # Se pregunta DESDE EL MISMO CONTEXTO en que correrá el servicio. Por SSH la sesión es
+    # remota y logind contesta «challenge» aunque el permiso esté concedido, así que se lanza
+    # una unidad transitoria: un servicio de usuario, igual que el de verdad.
+    RESPUESTA="$(systemd-run --user --wait --pipe --collect --quiet \
+        --unit=comprueba-permiso-apagado \
+        busctl call org.freedesktop.login1 /org/freedesktop/login1 \
+        org.freedesktop.login1.Manager CanPowerOff 2>/dev/null | sed 's/^s //')"
+    case "${RESPUESTA}" in
+        '"yes"') echo "${RESPUESTA} (puede apagar sola)" ;;
+        '"challenge"') echo "${RESPUESTA} (pedirá contraseña: el apagado no saldría)" ;;
+        *) echo "${RESPUESTA:-sin respuesta}" ;;
+    esac
 else
-    echo "(sin busctl: no se puede comprobar)"
+    echo "(sin systemd-run o busctl: no se puede comprobar)"
 fi
 
 echo
