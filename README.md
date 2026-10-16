@@ -882,6 +882,13 @@ nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas rea
    ponle un nombre y **añádete como usuario de prueba** (tu propia cuenta).
 4. En *Credenciales → Crear credenciales → ID de cliente de OAuth*, tipo de
    aplicación **Aplicación de escritorio**. Copia el *client ID* y el *client secret*.
+
+> **Si al autorizar sale `Error 400: redirect_uri_mismatch`**, el cliente no es de tipo
+> *Aplicación de escritorio* (el que viene marcado por defecto es *Aplicación web*, y esos
+> exigen tener apuntada la dirección de vuelta). Se arregla apuntando
+> `http://127.0.0.1:8917/oauth2callback` en *URIs de redireccionamiento autorizados* del
+> cliente, o borrándolo y creando uno del tipo correcto.
+
 5. Dale las credenciales al backend y conecta la cuenta:
 
 ```bash
