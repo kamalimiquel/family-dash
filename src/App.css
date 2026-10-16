@@ -12,14 +12,15 @@
 :root {
   /* --- medidas del panel ----------------------------------------------------
      La pantalla de la Pi son 27" con 1080x1920: 81,6 px/pulgada, o sea 32,12 px por
-     centímetro. Las tres filas fijas suman 44 cm (12 + 20 + 12), así que el centímetro
+     centímetro. Las cuatro filas suman 57 cm (12 + 27 + 12 + 6), así que el centímetro
      se recorta solo cuando la pantalla es más baja —en un portátil de 800 px de alto
      salen ~16 px/cm, y en uno de 600, ~11,5— y así nunca aparece scroll vertical ni
      se queda contenido cortado. El hueco y el margen son los mismos en todas partes. */
   --page: 20px;
   --gap: 16px;
-  --cm: min(32.12px, calc((100vh - var(--page) * 2 - var(--gap) * 3 - 4px) / 49));
+  --cm: min(32.12px, calc((100vh - var(--page) * 2 - var(--gap) * 3 - 4px) / 57));
   --cm5: calc(5 * var(--cm));
+  --cm6: calc(6 * var(--cm));
   --cm9: calc(9 * var(--cm));
   --cm10: calc(10 * var(--cm));
   --cm12: calc(12 * var(--cm));
@@ -28,6 +29,7 @@
   --cm19: calc(19 * var(--cm));
   --cm20: calc(20 * var(--cm));
   --cm22: calc(22 * var(--cm));
+  --cm27: calc(27 * var(--cm));
 
   /* --- espaciado: múltiplos de 4 ------------------------------------------- */
   --sp-1: 4px;
@@ -70,20 +72,20 @@
      y no había forma de que cuadraran con un 60/40 en las tres. Con dos columnas, cada
      fila parte exactamente por el mismo sitio. */
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  /* La fila de planificación (agenda y tareas) no mide siempre lo mismo: va de 14 a
-     22 cm según lo que haya que enseñar. Con pocos eventos se queda corta y los
-     titulares ganan el hueco (nunca menos de 5 cm); con la semana llena se planta en
-     el tope de 20 cm y los eventos
-     se deslizan dentro de su tarjeta. Las otras dos filas son fijas: la de arriba
-     porque el reloj y el mapa no cambian de tamaño, y la del menú porque el cuarto
-     de los agentes necesita sus 180 px de alto y la vista del PDF se agradece
-     grande. Las tres fijas a tope suman 44 cm, y a eso se le reservan 5 más para la
-     franja de titulares: de ahí el 49 de la fórmula. Sin esa reserva, en un portátil
-     la fila de titulares se quedaba en 4 px (medido).
-     La fila de en medio baja a 20 cm (era 22) para que los titulares tengan alto de
-     sobra con tres líneas de titular, que es lo que puede llegar a ocupar el más
-     largo: con el borde de abajo a la misma distancia que el de arriba. */
-  grid-template-rows: var(--cm12) minmax(var(--cm12), var(--cm20)) var(--cm12) minmax(var(--cm5), 1fr);
+  /* La fila de planificación (agenda y tareas) no mide siempre lo mismo: va de 12 a
+     27 cm según lo que haya que enseñar. Con pocos eventos se queda corta y los
+     titulares ganan el hueco (nunca menos de 6 cm); con la semana llena se planta en
+     el tope de 27 cm y los eventos se deslizan dentro de su tarjeta. Las otras dos
+     filas son fijas: la de arriba porque el reloj y el mapa no cambian de tamaño, y la
+     del menú porque el cuarto de los agentes necesita sus 180 px de alto y la vista
+     del PDF se agradece grande. Las tres fijas a tope suman 51 cm, y a eso se le
+     reservan 6 más para la franja de titulares: de ahí el 57 de la fórmula. Sin esa
+     reserva, en un portátil la fila de titulares se quedaba en 4 px (medido).
+     Los titulares ya no piden 13 cm: con la letra del calendario (`--t-body`, en vez de
+     los 25,9 px que gastaban) la fuente, tres líneas y los puntos caben de sobra en 6.
+     Ese alto se lo queda la fila de la agenda y las tareas, que así enseñan bastantes
+     más eventos —y siguen midiendo lo mismo entre sí, porque van en la misma fila—. */
+  grid-template-rows: var(--cm12) minmax(var(--cm12), var(--cm27)) var(--cm12) minmax(var(--cm6), 1fr);
   grid-template-areas:
     'now map'
     'calendar tasks'
@@ -1076,7 +1078,7 @@
 }
 
 .news__source {
-  font-size: clamp(0.55rem, 1.4vmin, 0.8rem);
+  font-size: var(--t-meta);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--accent);
@@ -1087,7 +1089,7 @@
 
 .news__title {
   min-height: 0;
-  font-size: clamp(0.72rem, 1.9vmin, 1.08rem);
+  font-size: var(--t-body);
   line-height: 1.28;
   color: var(--ink);
   display: -webkit-box;
@@ -1733,9 +1735,8 @@
   font-size: var(--t-meta);
 }
 
-/* Los titulares se reparten lo que queda: con 12 + 22 + 10 cm por delante les
-   quedan unos 430 px de alto, así que vuelven a ir en dos columnas y con la letra
-   más grande. */
+/* Los titulares se reparten lo que sobra de la pantalla: hoy unos 195 px, y con la
+   misma letra que el calendario. Van en las columnas que pidan las fuentes. */
 .news-strip {
   gap: 1.1vmin;
   grid-template-columns: repeat(var(--news-cols, 2), minmax(0, 1fr));
@@ -1747,11 +1748,11 @@
 }
 
 .news__source {
-  font-size: 1.6vmin;
+  font-size: var(--t-meta);
 }
 
 .news__title {
-  font-size: 2.4vmin;
+  font-size: var(--t-body);
   line-height: 1.3;
   -webkit-line-clamp: 3;
 }
