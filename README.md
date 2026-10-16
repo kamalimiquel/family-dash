@@ -801,7 +801,11 @@ nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas rea
   **pierden su programa con un apagón**, así que conviene comprobarlos después de cualquier
   corte largo. Desde que llega la corriente hasta que se ve el panel pasan unos **25-35 s**:
   25,4 s de arranque (medidos) y el kiosco unos segundos después, en cuanto entra el
-  escritorio.
+  escritorio. Y como el arranque es en frío y el Pi no tiene reloj de hardware, conviene tener
+  **`fake-hwclock`** instalado (`sudo apt-get install -y fake-hwclock` sin configurar nada):
+  guarda la hora al apagarse y la devuelve al arrancar, así que la hora es buena aunque todavía
+  no haya red. Importa más de lo que parece: con la hora muy desviada, las peticiones a Google
+  fallan por TLS.
 - **Wake-on-LAN desde una máquina que no se apague nunca** (sin comprar nada): la del NAS,
   por ejemplo, con una tarea programada a las 06:00 que mande el paquete mágico a la Pi
   (`scripts/despierta.py <mac> <difusión>`, que no necesita más que Python 3).
