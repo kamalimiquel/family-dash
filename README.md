@@ -444,6 +444,26 @@ Dos detalles que importan:
   arriba, así que se lleva todos los toques: un dedo sobre el pulsador de salir del quiosco
   enciende la pantalla y no saca el navegador del quiosco.
 
+### Fase 13 — la agenda se pasa de semana y las tareas se marcan hechas ✅
+
+Dos cosas pensadas para el dedo:
+
+- **La agenda se pasa de semana**: deslizando **a la izquierda, la siguiente; a la derecha, la
+  anterior** (el mismo sentido que los titulares). Mientras no sea la semana de hoy, la cabecera
+  dice el rango («23 oct – 29 oct») y aparece un botón **Hoy** para volver. El gesto es el mismo que
+  el de las noticias —umbral de 36 px, captura del puntero y `touch-action: pan-y`— para que el
+  desplazamiento de dentro de la agenda lo siga llevando el navegador.
+- **Las tareas se marcan como hechas** pulsando el círculo que llevan delante: se marcan **en
+  Google** (`PATCH …/tasks/{id}` con `status=completed`) y desaparecen de la lista, porque al leer
+  solo se piden las pendientes (`showCompleted=false`). No se borra nada: la tarea sigue en la
+  cuenta, completada, y se puede recuperar desde Google Tasks. Si Google no acepta el cambio, la
+  tarea vuelve a su sitio y la tarjeta lo dice.
+
+⚠️ **Marcar tareas necesita el permiso de escritura** (`.../auth/tasks`, no el de solo lectura que
+usaba el panel). Cambiar el permiso obliga a **volver a conectar la cuenta** (ver «Conectar la cuenta
+de Google»): Google no amplía un consentimiento ya dado. Hasta entonces, al pulsar el círculo el
+panel avisa de que falta el permiso y no lo cambia.
+
 ## Estructura
 
 ```
@@ -846,6 +866,11 @@ nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas rea
   mano. Ojo al pasar a cable: `eth0` va por DHCP y su ruta tiene más prioridad que la del
   WiFi, así que **la dirección del panel puede cambiar** — conviene reservarla en el router
   por la MAC de la tarjeta de cable.
+
+> **Cambio de permiso (tareas)**: para **marcar tareas como hechas** hace falta el permiso
+> **entero** de tareas (`https://www.googleapis.com/auth/tasks`), no el de solo lectura. Si la
+> cuenta se conectó antes, hay que repetir este paso para dar el nuevo: Google no amplía un
+> consentimiento ya dado, y el panel avisa de que falta mientras no se haga.
 
 ### Conectar la cuenta de Google (una sola vez)
 
