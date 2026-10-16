@@ -8,6 +8,8 @@ Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite
 tiempo**, **tareas**, **agenda**, **menú** de la carpeta compartida y **titulares**
 de prensa— colocados con **medidas en centímetros** sobre un **vídeo de fondo**.
 
+Privacidad: [PRIVACIDAD.md](PRIVACIDAD.md) — qué datos toca, dónde se guardan y qué no sale de casa.
+
 ![Panel completo en vertical (1080×1920), con datos de ejemplo inventados](docs/screenshots/panel-1080x1920.png)
 
 ---
