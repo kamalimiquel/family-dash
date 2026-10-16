@@ -769,6 +769,40 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 ```
 
+### Apagado y encendido automáticos
+
+El panel no tiene por qué estar encendido de noche. `scripts/apagado-nocturno.sh` instala
+un temporizador de usuario que lo apaga a la hora que se le diga:
+
+```bash
+./scripts/apagado-nocturno.sh            # a las 22:00 (por defecto)
+./scripts/apagado-nocturno.sh 23:30      # a otra hora
+./scripts/apagado-nocturno.sh --quitar   # deshacerlo
+```
+
+Deja dos unidades en `~/.config/systemd/user/` (`apagado-nocturno.timer` y
+`apagado-nocturno.service`) y no hace falta `sudo`: en Raspberry Pi OS la sesión local
+tiene permiso para apagar por polkit —el mismo que usa el menú de apagar del escritorio— y
+el script lo comprueba antes de armar nada, preguntándoselo a logind (`CanPowerOff`) en vez
+de suponerlo. El temporizador se declara **sin** `Persistent`: si la máquina estuvo apagada
+a esa hora, no queremos que se apague otra vez en cuanto arranque.
+
+**Encenderse sola es otra cosa, y por software no se puede.** Un Raspberry Pi 4 no tiene
+reloj con alarma —en esta no hay ni `/dev/rtc`— ni estado de suspensión: apagado no ejecuta
+nada, así que ningún cron ni temporizador puede arrancarlo. Las dos formas reales:
+
+- **Un temporizador en el enchufe** (lo más simple y robusto): que corte la corriente unos
+  minutos después del apagado —sobre las 22:05— y la devuelva a la hora de encender, las
+  06:00. El Pi arranca solo cuando le llega la corriente y el panel se levanta entero, que
+  el servidor, el kiosco y todo lo demás ya están en unidades con *linger* y en el
+  autostart. El apagado limpio de las 22:00 es lo que garantiza que ese corte no se lleve
+  ninguna escritura a medias.
+- **Wake-on-LAN desde una máquina que no se apague nunca** (sin comprar nada): la del NAS,
+  por ejemplo, con una tarea programada a las 06:00 que mande el paquete mágico a la Pi.
+  Antes hay que dejar la tarjeta de red del Pi a la escucha (`ethtool -s eth0 wol g`, o su
+  equivalente en NetworkManager) y **probarlo**: si el paquete no la despierta, la pantalla
+  se queda apagada hasta que alguien le devuelva la corriente a mano.
+
 ### Conectar la cuenta de Google (una sola vez)
 
 1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto
