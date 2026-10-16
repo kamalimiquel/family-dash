@@ -2032,3 +2032,37 @@
     animation: none;
   }
 }
+
+
+/* ---------------------------------------------------------------------------
+   Pantalla dormida.
+
+   En negro, pero encendida: es lo que se pidió, y además es lo único que se puede
+   hacer desde el navegador (apagar la salida de vídeo la dejaría con el cartel de
+   «sin señal» de muchos monitores, que da más luz que la pantalla en negro).
+
+   Mientras está puesta es el elemento de arriba, así que se lleva los toques: el
+   primer dedo solo despierta y no pulsa lo que hubiera debajo.
+
+   Dormirse sí tiene prisa por ser despacio; despertar no: la transición que cuenta es
+   la del estado de destino, así que el dormir son casi dos segundos y el despertar
+   es inmediato.
+   --------------------------------------------------------------------------- */
+.screen-idle {
+  position: fixed;
+  inset: 0;
+  /* Por encima de todo lo que hay en pantalla: las capas del panel llegan hasta 800
+     (el pulsador de salir del quiosco y los carteles del mapa). */
+  z-index: 900;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.screen-idle.dormida {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: none;
+  transition: opacity 1800ms ease;
+}

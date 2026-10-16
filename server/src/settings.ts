@@ -1,8 +1,9 @@
 import type { Db } from './db.js'
-import { DEFAULT_HOME, DEFAULT_PLACE, type HomePlace, type Place } from './config.js'
+import { DEFAULT_HOME, DEFAULT_PLACE, DEFAULT_SCREEN_IDLE_MINUTES, type HomePlace, type Place } from './config.js'
 
 const PLACE_KEY = 'weather.place'
 const HOME_KEY = 'map.home'
+const SCREEN_IDLE_KEY = 'screen.idleMinutes'
 
 /**
  * Dónde está casa, para el mapa: la referencia de «a 1,2 km de casa». Vive en la
@@ -104,4 +105,51 @@ export function parsePlace(input: unknown): Place {
   const country = typeof raw.country === 'string' && raw.country.trim() ? raw.country.trim() : undefined
 
   return { name, country, latitude, longitude, timezone }
+}
+
+/**
+ * Cuántos minutos sin que nadie toque la pantalla antes de dejarla en negro (0 = nunca).
+ * Es un ajuste del dispositivo: en una casa querrán que se duerma y en otra no.
+ */
+export function getScreenIdleMinutes(db: Db): number {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(SCREEN_IDLE_KEY) as
+    | { value: string }
+    | undefined
+
+  if (!row) return DEFAULT_SCREEN_IDLE_MINUTES
+
+  try {
+    return parseScreenIdleMinutes(JSON.parse(row.value))
+  } catch {
+    // Un valor ilegible en la base de datos no puede dejar la pantalla encendida toda la
+    // noche ni impedir que arranque el panel: se cae al valor de ejemplo.
+    return DEFAULT_SCREEN_IDLE_MINUTES
+  }
+}
+
+export function setScreenIdleMinutes(db: Db, input: unknown): number {
+  const minutos = parseScreenIdleMinutes(input)
+  db.prepare(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).run(SCREEN_IDLE_KEY, JSON.stringify(minutos), Date.now())
+  return minutos
+}
+
+/**
+ * Valida lo que llega por la API. Admite el número suelto o el objeto `{idleMinutes}`,
+ * porque el ajuste entero es un número y envolverlo solo tiene sentido para dejarlo
+ * junto a los demás en `PUT /api/settings`. De 0 (nunca) a 240 minutos.
+ */
+export function parseScreenIdleMinutes(input: unknown): number {
+  const minutos =
+    typeof input === 'object' && input !== null
+      ? Number((input as Record<string, unknown>).idleMinutes)
+      : Number(input)
+
+  if (!Number.isFinite(minutos) || minutos < 0 || minutos > 240) {
+    throw new Error('screen.idleMinutes tiene que ser un número entre 0 y 240')
+  }
+
+  return minutos
 }

@@ -416,6 +416,27 @@ contenedor: un elemento **no** ve su propio contenedor, así que el `padding` de
 
 ---
 
+### Fase 12 — la pantalla se duerme, pero no se apaga ✅
+
+Si nadie toca la pantalla, el panel se queda en negro: menos luz y menos desgaste, y vuelve
+al primer roce. Se configura en el dispositivo, como todo lo demás: `screen.idleMinutes` en
+la tabla `settings` (0 = nunca; sin ajuste, cinco minutos).
+
+```bash
+curl -X PUT http://<panel>:4173/api/settings -H 'content-type: application/json' \
+  -d '{"screen":{"idleMinutes":5}}'
+```
+
+Dos detalles que importan:
+
+- **La pantalla sigue encendida.** No se toca la salida de vídeo a propósito: apagarla de
+  verdad la dejaría con el cartel de «sin señal» de muchos monitores, que da más luz que la
+  pantalla en negro. Y en esta Pi `vcgencmd display_power 0` no hace nada —con el driver KMS
+  el estado sigue siendo `1`—, así que tampoco era una opción.
+- **El primer toque solo despierta.** Mientras está puesta, la capa negra es el elemento de
+  arriba, así que se lleva todos los toques: un dedo sobre el pulsador de salir del quiosco
+  enciende la pantalla y no saca el navegador del quiosco.
+
 ## Estructura
 
 ```

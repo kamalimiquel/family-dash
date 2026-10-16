@@ -154,3 +154,11 @@ export const DEFAULT_PLACE: Place = {
   longitude: 2.1686,
   timezone: 'Europe/Madrid',
 }
+
+/**
+ * Cuántos minutos sin que nadie toque la pantalla antes de dejarla en negro (0 = nunca).
+ * Se ajusta en el dispositivo con `PUT /api/settings`, como todo lo demás: el
+ * repositorio no decide cuándo se duerme la pantalla de ninguna casa, solo el valor
+ * de ejemplo que se usa mientras el panel no tenga el suyo guardado.
+ */
+export const DEFAULT_SCREEN_IDLE_MINUTES = 5
