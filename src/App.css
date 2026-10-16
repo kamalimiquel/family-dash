@@ -56,6 +56,15 @@
   --t-meta: clamp(0.55rem, 1.4vmin, 0.8rem);
   --t-foot: clamp(0.53rem, 1.3vmin, 0.75rem);
 
+  /* Dos sitios llevan letra propia, aparte de la escala general, para poder moverlos
+     sin arrastrar a nadie más:
+       · los titulares de prensa, un escalón por debajo del texto de leer (17,3 px en
+         la pantalla de casa, donde 2vmin son 21,6)
+       · la lista del cuarto (nombre, estado y sesiones de cada máquina), a la mitad
+         exacta de ese texto de leer (10,8 px) */
+  --t-news: clamp(0.7rem, 1.6vmin, 1.15rem);
+  --t-agents: clamp(0.55rem, 1vmin, 0.68rem);
+
   /* --- color de aviso, siempre el mismo ------------------------------------ */
   --warn: #ffd08a;
   --danger: #ff9f7a;
@@ -1532,7 +1541,9 @@
   align-items: center;
   gap: 0.4em;
   color: var(--ink-faint);
-  font-size: var(--t-meta);
+  /* La misma letra que la lista: con `--t-meta` (12,8 px) la etiqueta «en directo»
+     quedaría más grande que los nombres que rotula, que van a 10,8. */
+  font-size: var(--t-agents);
 }
 
 /* El puntito de la conexión: verde si el SSE está vivo, rojo si se ha caído. */
@@ -1591,7 +1602,7 @@
   align-items: center;
   gap: 0.4em;
   color: var(--ink-soft);
-  font-size: var(--t-lead);
+  font-size: var(--t-agents);
 }
 
 .agents__chip {
@@ -1617,7 +1628,9 @@
 
 .agents__hint {
   color: var(--ink-faint);
-  font-size: var(--t-foot);
+  /* La misma letra que la lista: con `--t-foot` (12 px) quedaría más grande que los
+     nombres que resume, que ahora van a 10,8. */
+  font-size: var(--t-agents);
 }
 
 /* La agenda lleva la fila de planificación, y esa fila se adapta a lo que haya que
@@ -1751,8 +1764,10 @@
   font-size: var(--t-meta);
 }
 
+/* La letra de los titulares es la suya, no la del calendario: `--t-news`, un escalón
+   por debajo. (Aquí, que es donde manda: la regla de arriba la pisa esta.) */
 .news__title {
-  font-size: var(--t-lead);
+  font-size: var(--t-news);
   line-height: 1.3;
   -webkit-line-clamp: 3;
 }
