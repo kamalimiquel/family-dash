@@ -8,7 +8,7 @@ Stack: **TypeScript + React + Vite** en el cliente, **Node.js + Express + SQLite
 tiempo**, **tareas**, **agenda**, **menú** de la carpeta compartida y **titulares**
 de prensa— colocados con **medidas en centímetros** sobre un **vídeo de fondo**.
 
-![Panel completo en vertical (1080×1920), con datos de ejemplo](docs/screenshots/panel-1080x1920.png)
+![Panel completo en vertical (1080×1920), con datos de ejemplo inventados](docs/screenshots/panel-1080x1920.png)
 
 ---
 
@@ -49,7 +49,10 @@ real se configura con `PUT /api/settings`).
 - Si Open-Meteo no responde, el backend **sirve la última lectura cacheada** y el
   widget lo indica; si el backend entero cae, el reloj sigue funcionando igual.
 
-![En la pantalla de 7" (800×480), con el reloj y el tiempo apretados](docs/screenshots/home-800x480.png)
+El panel está pensado para la pantalla vertical del salón (1080×1920). En apaisado el
+diseño se recoloca, pero a poca altura la **franja de titulares se recorta por abajo**:
+eso queda pendiente de afinar (en 800×480, el tamaño que usaba la captura vieja, el
+diseño actual ni siquiera cabe).
 
 ### Fase 3 — Google Calendar y tareas ✅
 
@@ -364,6 +367,8 @@ que es un servicio que vive siempre y dejaría al robot despierto para siempre.
 
 ### Fase 11 — el radar de Meteocat, al desplegar la tarjeta del tiempo ✅
 
+![La tarjeta desplegada, con el radar de Cataluña entero](docs/screenshots/radar-1080x1920.png)
+
 La tarjeta de la hora y el tiempo lleva **el reloj arriba y el radar de precipitación debajo**,
 en los dos estados. En reposo el radar va **encuadrado en la localidad** —los ~20 × 23 km de
 la ciudad y su comarca, que es lo que cabe en una tarjeta de 19 cm— y, al tocarla, la tarjeta
@@ -417,6 +422,8 @@ contenedor: un elemento **no** ve su propio contenedor, así que el `padding` de
 ---
 
 ### Fase 12 — la pantalla se duerme, pero no se apaga ✅
+
+![La pantalla dormida: en negro, pero encendida](docs/screenshots/pantalla-dormida-1080x1920.png)
 
 Si nadie toca la pantalla, el panel se queda en negro: menos luz y menos desgaste, y vuelve
 al primer roce. Se configura en el dispositivo, como todo lo demás: `screen.idleMinutes` en
