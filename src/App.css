@@ -51,7 +51,7 @@
 
   /* --- jerarquía de letra: tamaños físicos, iguales en todas las tarjetas --- */
   --t-title: clamp(1.05rem, 2.6vmin, 1.7rem);
-  --t-lead: clamp(0.8rem, 2vmin, 1.15rem);
+  --t-lead: clamp(0.8rem, 2vmin, 1.35rem);
   --t-body: clamp(0.72rem, 1.8vmin, 1.02rem);
   --t-meta: clamp(0.55rem, 1.4vmin, 0.8rem);
   --t-foot: clamp(0.53rem, 1.3vmin, 0.75rem);
@@ -1089,7 +1089,7 @@
 
 .news__title {
   min-height: 0;
-  font-size: var(--t-body);
+  font-size: var(--t-lead);
   line-height: 1.28;
   color: var(--ink);
   display: -webkit-box;
@@ -1752,7 +1752,7 @@
 }
 
 .news__title {
-  font-size: var(--t-body);
+  font-size: var(--t-lead);
   line-height: 1.3;
   -webkit-line-clamp: 3;
 }
