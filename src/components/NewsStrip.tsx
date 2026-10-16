@@ -11,9 +11,11 @@ export function NewsStrip({ state }: { state: NewsState }) {
   const feeds = state.data?.feeds ?? []
   if (feeds.length === 0) return null
 
-  // Con dos fuentes o menos, una columna; con tres o cuatro, dos; con más, tres.
-  // (La franja es alta otra vez, así que dos columnas de titulares grandes.)
-  const columns = feeds.length <= 2 ? feeds.length : feeds.length <= 4 ? 2 : 3
+  // Una columna por fuente, siempre: es la única forma de que las tarjetas queden en
+  // UNA fila. Con dos columnas y cuatro fuentes salen dos filas de tarjetas dentro de
+  // una franja que solo tiene alto para una, y la de abajo se sale por debajo del
+  // margen de la pantalla (medido: el borde de abajo quedaba a -39 px en vez de a 20).
+  const columns = feeds.length
 
   return (
     <ul
