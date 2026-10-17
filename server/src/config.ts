@@ -49,6 +49,12 @@ export const NEWS_TTL_MS = Number(process.env.NEWS_TTL_MS ?? 15 * 60 * 1000)
 /** Titulares que se guardan por fuente (la pantalla enseña uno cada vez). */
 export const NEWS_ITEMS_PER_SOURCE = Number(process.env.NEWS_ITEMS_PER_SOURCE ?? 8)
 
+/**
+ * El saldo de la suscripción de Nous Portal. Se pregunta cada media hora: el token de
+ * acceso dura una hora y los créditos se mueven despacio, así que no hace falta más.
+ */
+export const PORTAL_TTL_MS = Number(process.env.PORTAL_TTL_MS ?? 30 * 60 * 1000)
+
 /** Dónde está la familia: se pregunta a menudo porque cambia de sitio. */
 export const LOCATIONS_TTL_MS = Number(process.env.LOCATIONS_TTL_MS ?? 2 * 60 * 1000)
 

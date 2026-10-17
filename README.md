@@ -466,6 +466,21 @@ usaba el panel). Cambiar el permiso obliga a **volver a conectar la cuenta** (ve
 de Google»): Google no amplía un consentimiento ya dado. Hasta entonces, al pulsar el círculo el
 panel avisa de que falta el permiso y no lo cambia.
 
+### Fase 14 — el saldo de Nous Portal junto a «Agentes» ✅
+
+El cuarto enseña los créditos que quedan de la suscripción, al lado del título: «21,5 / 22». Lo lee
+el propio panel (`GET /api/portal`) con una autorización **suya**, guardada en `data/portal-auth.json`
+(600, fuera del repositorio y del despliegue).
+
+- **Una autorización propia, no la del portátil.** Los refresh tokens de Nous son de **un solo uso**:
+  si la Pi usara el del ordenador, el primer refresco dejaría fuera a Hermes. Se pide una vez con el
+  flujo de código de dispositivo (`/api/oauth/device/code`) y a partir de ahí la Pi refresca sola.
+- **Nous no tiene API pública de balance** (está pedida en el repositorio de Hermes y todavía no
+  existe), pero el propio Hermes lee la suscripción con `GET /api/billing/subscription` y el token de
+  OAuth. Es exactamente lo que hace el panel.
+- **Si el portal no contesta**, se sigue enseñando la última respuesta buena (con la cifra atenuada):
+  un panel de pared no puede quedarse en blanco por un fallo ajeno.
+
 ## Estructura
 
 ```

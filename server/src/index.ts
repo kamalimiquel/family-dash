@@ -12,6 +12,7 @@ import { createKioskRouter } from './routes/kiosk.js'
 import { createLocationsRouter } from './routes/locations.js'
 import { createNewsRouter } from './routes/news.js'
 import { createPdfRouter } from './routes/pdf.js'
+import { createPortalRouter } from './routes/portal.js'
 import { createSettingsRouter } from './routes/settings.js'
 import { createWeatherRouter } from './routes/weather.js'
 
@@ -44,6 +45,7 @@ app.use('/api', createNewsRouter(db))
 app.use('/api', createLocationsRouter(db))
 app.use('/api', createAgentsRouter(db, room))
 app.use('/api', createPdfRouter(db))
+app.use('/api', createPortalRouter(db))
 app.use('/api', createKioskRouter())
 
 // Cualquier otra ruta /api: 404 en JSON, no HTML.

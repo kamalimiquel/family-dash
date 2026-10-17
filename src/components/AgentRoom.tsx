@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { AgentsState } from '../hooks/useAgents'
 import type { AgentState } from '../lib/types'
 import { RoomEngine } from '../lib/room/engine'
+import { textoCreditos, usePortal } from '../hooks/usePortal'
 
 /** Cómo se cuenta cada estado en palabras. */
 const EN_PALABRAS: Record<AgentState, string> = {
@@ -23,6 +24,10 @@ export function AgentRoom({ state }: { state: AgentsState }) {
   const lienzo = useRef<HTMLCanvasElement | null>(null)
   const motor = useRef<RoomEngine | null>(null)
   const [elegido, setElegido] = useState<string | null>(null)
+  // El saldo de la suscripción del portal, junto al título. Si no hay autorización o el
+  // portal no contesta, `saldo` es null y la cabecera se queda como estaba.
+  const portal = usePortal()
+  const saldo = portal ? textoCreditos(portal) : null
 
   // El motor se monta una vez y se apaga al desmontar la tarjeta.
   useEffect(() => {
@@ -60,7 +65,18 @@ export function AgentRoom({ state }: { state: AgentsState }) {
   return (
     <section className="widget widget--agents" aria-label="Los agentes de Hermes">
       <header className="agents__head card-head">
-        <h2 className="agents__title card-title">Agentes</h2>
+        <div className="agents__titles">
+          <h2 className="agents__title card-title">Agentes</h2>
+          {saldo && (
+            <span
+              className="agents__balance"
+              data-stale={portal?.stale ? 'true' : undefined}
+              title={`Suscripción de Nous Portal${portal?.plan ? ` · ${portal.plan}` : ''}`}
+            >
+              {saldo}
+            </span>
+          )}
+        </div>
         <span className={`agents__link${sinConexion ? '' : ' agents__link--on'}`}>
           {sinConexion ? 'sin conexión' : 'en directo'}
         </span>

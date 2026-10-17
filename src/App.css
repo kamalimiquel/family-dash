@@ -1529,6 +1529,27 @@
   gap: var(--sp-3);
 }
 
+/* El título y, pegado a él, el saldo de la suscripción del portal. */
+.agents__titles {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  min-width: 0;
+}
+
+.agents__balance {
+  font-size: var(--t-meta);
+  color: var(--ink-faint);
+  /* Cifras de ancho fijo: si el saldo cambia, el número no baila. */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* El portal no ha contestado: lo que se enseña es la última respuesta buena. */
+.agents__balance[data-stale='true'] {
+  opacity: 0.55;
+}
+
 .agents__title {
   margin: 0;
   font-size: var(--t-title);
