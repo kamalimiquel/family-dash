@@ -1538,8 +1538,8 @@
 }
 
 .agents__balance {
-  font-size: var(--t-meta);
-  color: var(--ink-faint);
+  font-size: var(--t-body);
+  color: var(--ink);
   /* Cifras de ancho fijo: si el saldo cambia, el número no baila. */
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
