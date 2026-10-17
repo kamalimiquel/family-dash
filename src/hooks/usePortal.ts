@@ -66,5 +66,5 @@ export function textoCreditos(uso: PortalUsage): string | null {
     maximumFractionDigits: 1,
   })
   const total = uso.monthlyCredits.toLocaleString('es-ES', { maximumFractionDigits: 0 })
-  return `${queda} / ${total}`
+  return `${queda}$ / ${total}$`
 }
