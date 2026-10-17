@@ -85,7 +85,6 @@ export function CalendarWidget({ state }: { state: AgendaState }) {
       aria-label="Agenda familiar"
       onPointerDown={(evento) => {
         desde.current = { x: evento.clientX, y: evento.clientY }
-        evento.currentTarget.setPointerCapture?.(evento.pointerId)
       }}
       onPointerUp={(evento) => {
         const inicio = desde.current
